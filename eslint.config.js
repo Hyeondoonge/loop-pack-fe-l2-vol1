@@ -10,9 +10,16 @@ export default tseslint.config(
     plugins: {
       'react-hooks': reactHooks
     },
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.app.json', './tsconfig.node.json'],
+        tsconfigRootDir: import.meta.dirname
+      }
+    },
     rules: {
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn'
+      'react-hooks/exhaustive-deps': 'error',
+      '@typescript-eslint/no-floating-promises': 'error'
     }
   }
 );
