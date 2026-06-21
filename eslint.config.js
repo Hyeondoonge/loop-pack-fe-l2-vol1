@@ -35,7 +35,6 @@ export default tseslint.config(
       'id-length': ['warn', { min: 2, exceptions: ['i', 'j', 'k', '_'] }],
       // 핸들러 네이밍 — onXXX는 props 전달용으로 예약, 선언하는 핸들러는 handleXXX
       // 쉽게 지킬 수 있는 규칙이므로 error로 지정
-      // 핸들러 네이밍 — onXXX는 props 전달용으로 예약, 선언하는 핸들러는 handleXXX
       'no-restricted-syntax': [
         'error',
         {
