@@ -15,7 +15,19 @@ const PAYMENT_LABEL: Record<PaymentMethod, string> = {
 
 // 배송지 — 접기/펼치기와 선택 요약은 스스로 책임진다.
 // 단, 실제 선택 동작(onSelectAddress)은 AddressForm → AddressField 로 통과시킨다.
-function DeliverySection({ addresses, selectedAddressId, onSelectAddress }: { addresses: Address[]; selectedAddressId: string; onSelectAddress: (id: string) => void }) {
+function DeliverySection({
+  addresses,
+  selectedAddressId,
+  onSelectAddress,
+  onlyNear,
+  onToggleOnlyNear
+}: {
+  addresses: Address[];
+  selectedAddressId: string;
+  onSelectAddress: (id: string) => void;
+  onlyNear: boolean;
+  onToggleOnlyNear: (next: boolean) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const selected = addresses.find((a) => a.id === selectedAddressId)!;
   return (
@@ -27,7 +39,7 @@ function DeliverySection({ addresses, selectedAddressId, onSelectAddress }: { ad
         </button>
       </div>
       {expanded ? (
-        <AddressForm addresses={addresses} selectedAddressId={selectedAddressId} onSelectAddress={onSelectAddress} />
+        <AddressForm addresses={addresses} selectedAddressId={selectedAddressId} onSelectAddress={onSelectAddress} onlyNear={onlyNear} onToggleOnlyNear={onToggleOnlyNear} />
       ) : (
         <p className="addr-summary">
           {selected.label} · {selected.recipient} ({selected.detail})
@@ -39,13 +51,24 @@ function DeliverySection({ addresses, selectedAddressId, onSelectAddress }: { ad
 
 // '도서산간 제외' 필터는 스스로 책임진다.
 // 선택 동작(onSelectAddress)은 그대로 AddressField 로 통과시킨다.
-function AddressForm({ addresses, selectedAddressId, onSelectAddress }: { addresses: Address[]; selectedAddressId: string; onSelectAddress: (id: string) => void }) {
-  const [onlyNear, setOnlyNear] = useState(false);
+function AddressForm({
+  addresses,
+  selectedAddressId,
+  onSelectAddress,
+  onlyNear,
+  onToggleOnlyNear
+}: {
+  addresses: Address[];
+  selectedAddressId: string;
+  onSelectAddress: (id: string) => void;
+  onlyNear: boolean;
+  onToggleOnlyNear: (next: boolean) => void;
+}) {
   const list = onlyNear ? addresses.filter((a) => !a.isRemote) : addresses;
   return (
     <>
       <label className="filter">
-        <input type="checkbox" checked={onlyNear} onChange={(e) => setOnlyNear(e.target.checked)} />
+        <input type="checkbox" checked={onlyNear} onChange={(e) => onToggleOnlyNear(e.target.checked)} />
         도서산간 제외
       </label>
       {list.map((a) => (
@@ -71,6 +94,7 @@ export function CheckoutPage() {
   const cart = CART;
 
   const [selectedAddressId, setSelectedAddressId] = useState(ADDRESSES[0].id);
+  const [onlyNear, setOnlyNear] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [usePoint, setUsePoint] = useState(false);
@@ -96,9 +120,20 @@ export function CheckoutPage() {
 
   // ── 적립금 정책 ──────────────────────────────
   const pointDiscount = usePoint ? Math.min(pointInput, member.point, itemTotal) : 0;
-
-  // 최종 금액은 렌더 중 파생값으로 계산한다.
   const finalPrice = itemTotal + shippingFee - couponDiscount - pointDiscount;
+
+  const handleToggleOnlyNear = (newOnlyNear: boolean) => {
+    setOnlyNear(newOnlyNear);
+
+    if (!newOnlyNear) {
+      return;
+    }
+
+    if (address.isRemote) {
+      const firstNear = ADDRESSES.find((a) => !a.isRemote);
+      if (firstNear) setSelectedAddressId(firstNear.id);
+    }
+  };
 
   const applyCoupon = () => {
     const found = COUPONS.find((c) => c.code === couponCode.trim());
@@ -124,7 +159,7 @@ export function CheckoutPage() {
     <div className="checkout">
       <h1>주문/결제</h1>
 
-      <DeliverySection addresses={ADDRESSES} selectedAddressId={selectedAddressId} onSelectAddress={setSelectedAddressId} />
+      <DeliverySection addresses={ADDRESSES} selectedAddressId={selectedAddressId} onSelectAddress={setSelectedAddressId} onlyNear={onlyNear} onToggleOnlyNear={handleToggleOnlyNear} />
 
       <div className="section">
         <h2>배송 요청사항</h2>
