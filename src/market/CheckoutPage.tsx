@@ -189,7 +189,7 @@ export function CheckoutPage() {
           <input type="checkbox" checked={usePoint} onChange={(e) => setUsePoint(e.target.checked)} />
           적립금 사용 (보유 {member.point.toLocaleString()}P)
         </label>
-        {usePoint ? <input type="number" value={pointInput} onChange={(e) => setPointInput(Number(e.target.value))} /> : null}
+        {usePoint ? <input type="number" min={0} max={member.point} value={pointInput} onChange={(e) => setPointInput(Math.max(0, Number(e.target.value)))} /> : null}
       </div>
 
       <div className="section">
