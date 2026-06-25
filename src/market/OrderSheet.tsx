@@ -27,6 +27,7 @@ export function OrderSheet({ onPlace }: OrderSheetProps) {
 
   const address = ADDRESSES.find((a) => a.id === selectedAddressId)!;
   const effectivePointInput = usePoint ? pointInput : 0;
+
   const { itemTotal, shippingFee, pointDiscount, finalPrice } = getFinalPrice({
     cart: CART,
     address,

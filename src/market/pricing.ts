@@ -1,5 +1,6 @@
 import type { Address, CartItem, Coupon, Member } from './types';
 
+// AI 생성 코드
 type PricingInput = {
   cart: CartItem[];
   address: Address;
@@ -13,6 +14,7 @@ export type PricingResult = {
   shippingFee: number;
   couponDiscount: number;
   pointDiscount: number;
+  vipDiscount: number;
   finalPrice: number;
 };
 
@@ -26,8 +28,9 @@ export function getFinalPrice(input: PricingInput): PricingResult {
   const couponDiscount = input.coupon ? input.coupon.discount : 0;
   const pointDiscount = Math.min(input.pointInput, input.member.point, itemTotal);
 
-  const subtotal = itemTotal + shippingFee - couponDiscount - pointDiscount;
-  const finalPrice = input.member.grade === 'VIP' ? Math.round(subtotal * 0.9) : subtotal;
+  // 각 할인은 정가 기준 독립 차감 — VIP 10%는 상품 금액에만, 배송비는 정가
+  const vipDiscount = input.member.grade === 'VIP' ? Math.round(itemTotal * 0.1) : 0;
+  const finalPrice = itemTotal - vipDiscount - couponDiscount - pointDiscount + shippingFee;
 
-  return { itemTotal, shippingFee, couponDiscount, pointDiscount, finalPrice };
+  return { itemTotal, shippingFee, couponDiscount, pointDiscount, vipDiscount, finalPrice };
 }
