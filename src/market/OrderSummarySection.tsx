@@ -20,7 +20,7 @@ export function OrderSummarySection({ itemTotal, shippingFee, appliedCoupon, poi
       {pointDiscount > 0 ? <PriceLine label="적립금 사용" amount={pointDiscount} isDiscount /> : null}
       <div className="total">
         <span>최종 결제 금액</span>
-        <Price amount={finalPrice} />
+        <Price amount={finalPrice} variant="total" />
       </div>
     </div>
   );

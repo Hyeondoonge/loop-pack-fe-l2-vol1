@@ -1,3 +1,5 @@
+import { Price } from './Price';
+
 interface PriceLineProps {
   label: string;
   amount: number;
@@ -12,10 +14,7 @@ export function PriceLine({ label, amount, subLabel, isDiscount }: PriceLineProp
         <span>{label}</span>
         {subLabel && <small>{subLabel}</small>}
       </div>
-      <strong style={{ color: isDiscount ? '#ef4444' : 'var(--text-h)' }}>
-        {isDiscount ? '- ' : ''}
-        {amount.toLocaleString()}원
-      </strong>
+      <Price amount={amount} variant={isDiscount ? 'discount' : 'default'} />
     </div>
   );
 }
