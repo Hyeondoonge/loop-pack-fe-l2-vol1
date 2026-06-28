@@ -25,7 +25,7 @@ export function OrderSheet({ onPlace }: OrderSheetProps) {
   const [pointInput, setPointInput] = useState(0);
   const [agreed, setAgreed] = useState(false);
 
-  const address = ADDRESSES.find((a) => a.id === selectedAddressId)!;
+  const address = ADDRESSES.find((a) => a.id === selectedAddressId);
   const effectivePointInput = usePoint ? pointInput : 0;
 
   const { itemTotal, shippingFee, pointDiscount, finalPrice } = calcFinalPrice({

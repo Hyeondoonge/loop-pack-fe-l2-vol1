@@ -37,12 +37,12 @@ export function DeliveryAddressSection({ selectedAddressId, onSelectAddress }: D
   const [expanded, setExpanded] = useState(false);
   const [onlyNear, setOnlyNear] = useState(false);
 
-  const selected = ADDRESSES.find((a) => a.id === selectedAddressId)!;
+  const selected = ADDRESSES.find((a) => a.id === selectedAddressId);
 
   const handleToggleOnlyNear = (newOnlyNear: boolean) => {
     setOnlyNear(newOnlyNear);
     if (!newOnlyNear) return;
-    if (selected.isRemote) {
+    if (selected?.isRemote) {
       const firstNear = ADDRESSES.find((a) => !a.isRemote);
       if (firstNear) onSelectAddress(firstNear.id);
     }
@@ -59,9 +59,11 @@ export function DeliveryAddressSection({ selectedAddressId, onSelectAddress }: D
       {expanded ? (
         <AddressForm selectedAddressId={selectedAddressId} onSelectAddress={onSelectAddress} onlyNear={onlyNear} onToggleOnlyNear={handleToggleOnlyNear} />
       ) : (
-        <p className="addr-summary">
-          {selected.label} · {selected.recipient} ({selected.detail})
-        </p>
+        selected && (
+          <p className="addr-summary">
+            {selected.label} · {selected.recipient} ({selected.detail})
+          </p>
+        )
       )}
     </div>
   );

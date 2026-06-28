@@ -33,6 +33,8 @@ export default tseslint.config(
       'react/no-unstable-nested-components': 'error',
       // 타입 단언 전면 금지 — `value as X`와 꺾쇠 `<X>value` 둘 다 차단(as const는 예외). 단언으로 덮지 말고 타입 가드/제네릭으로 좁혀라
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+      // non-null 단언(x!) 금지 — strictNullChecks가 잡은 null 위험을 ! 한 글자로 무력화하는 우회로 차단. if 가드로 좁혀라
+      '@typescript-eslint/no-non-null-assertion': 'error',
       // == 의 암묵 타입 변환(0 == '', null == undefined 등) 비교 버그 차단 — 항상 ===/!== 강제
       eqeqeq: 'error',
       // 의미없는 이름 금지, 코드 수정 빈번할 경우 고려하여 warn
