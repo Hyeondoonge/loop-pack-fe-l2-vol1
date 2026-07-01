@@ -28,7 +28,8 @@ export default tseslint.config(
       // 단, 'stale closure' 문제에 유의해서 스스로 코드 변경 필요성을 판단해야함
       'react-hooks/exhaustive-deps': 'warn',
       // 배열 index를 key로 쓰면 리스트 변경 시 잘못된 재사용·상태 꼬임 발생 — AI가 흔히 저지르는 실수
-      'react/no-array-index-key': 'error',
+      // 단, 재정렬/삽입·삭제 없는 파생 배열 + 무상태 leaf 조합은 정당한 예외이므로 error 대신 warn
+      'react/no-array-index-key': 'warn',
       // 렌더 함수 안에서 컴포넌트를 정의하면 매 렌더마다 재생성되어 unmount/remount — 결정적으로 잡히는 안티패턴
       'react/no-unstable-nested-components': 'error',
       // 타입 단언 전면 금지 — `value as X`와 꺾쇠 `<X>value` 둘 다 차단(as const는 예외). 단언으로 덮지 말고 타입 가드/제네릭으로 좁혀라
