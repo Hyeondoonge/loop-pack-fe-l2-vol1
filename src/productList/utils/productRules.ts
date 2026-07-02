@@ -1,4 +1,4 @@
-import type { Product } from './types';
+import type { Product } from '../types';
 
 export function formatPrice(value: number): string {
   return value.toLocaleString() + '원';

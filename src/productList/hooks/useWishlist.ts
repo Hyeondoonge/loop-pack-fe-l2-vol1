@@ -1,5 +1,5 @@
 import { usePersistentState } from './usePersistentState';
-import { STORAGE_KEYS } from './storageKeys';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 
 // 위시리스트 — 렌더에 쓰이므로(includes/length) state 유지. 영속화는 usePersistentState에 위임.
 export function useWishlist() {

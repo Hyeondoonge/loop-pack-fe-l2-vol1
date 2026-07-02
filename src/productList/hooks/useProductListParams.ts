@@ -1,5 +1,5 @@
 import { useUrlSearchParams } from './useUrlSearchParams';
-import type { Product, SortBy } from './types';
+import type { Product, SortBy } from '../types';
 
 const CATEGORY_VALUES: ('all' | Product['category'])[] = ['all', 'electronics', 'fashion', 'home', 'beauty'];
 const SORT_VALUES: SortBy[] = ['latest', 'popular', 'price-asc', 'price-desc'];

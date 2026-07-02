@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useProducts, PAGE_SIZE, type Product, type SortBy } from './useProducts';
-import { useProductListParams } from './useProductListParams';
-import ProductCard from './ProductCard';
-import Pagination from './Pagination';
-import { useWishlist } from './useWishlist';
-import { useRecentlyViewed } from './useRecentlyViewed';
+import { useProducts, type Product, type SortBy } from './hooks/useProducts';
+import { useProductListParams } from './hooks/useProductListParams';
+import { PAGE_SIZE } from './service/productApi';
+import ProductCard from './components/ProductCard';
+import Pagination from './components/Pagination';
+import { useWishlist } from './hooks/useWishlist';
+import { useRecentlyViewed } from './hooks/useRecentlyViewed';
 import './ProductListPage.css';
 
 // ─────────────────────────────────────────────────────────

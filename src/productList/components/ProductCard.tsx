@@ -1,5 +1,5 @@
-import type { Product } from './types';
-import { formatPrice, getProductBadges, isFreeShipping } from './productRules';
+import type { Product } from '../types';
+import { formatPrice, getProductBadges, isFreeShipping } from '../utils/productRules';
 
 interface ProductCardProps {
   product: Product;
