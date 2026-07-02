@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useProducts, PAGE_SIZE, type Product, type SortBy } from './useProducts';
 import ProductCard from './ProductCard';
+import Pagination from './Pagination';
 import { useWishlist } from './useWishlist';
 import { useRecentlyViewed } from './useRecentlyViewed';
 import './ProductListPage.css';
@@ -123,10 +124,6 @@ export function ProductListPage() {
     setPage(1);
   };
 
-  const handlePageChange = (next: number) => {
-    setPage(next);
-  };
-
   const handleResetFilters = () => {
     setCategory('all');
     setMinPrice('');
@@ -139,10 +136,6 @@ export function ProductListPage() {
 
   // ─── 페이지네이션 계산 (인라인) ─────────────────────────
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const pageNumbers: number[] = [];
-  const startPage = Math.max(1, page - 2);
-  const endPage = Math.min(totalPages, page + 2);
-  for (let i = startPage; i <= endPage; i++) pageNumbers.push(i);
 
   // ─── 로딩/에러는 early return ───────────────────────────
   if (isLoading && products.length === 0) {
@@ -243,27 +236,7 @@ export function ProductListPage() {
       </section>
 
       {/* ─── 페이지네이션 ───────────────────────────────── */}
-      {totalPages > 1 && (
-        <nav className="pagination">
-          <button onClick={() => handlePageChange(1)} disabled={page === 1} aria-label="첫 페이지">
-            «
-          </button>
-          <button onClick={() => handlePageChange(page - 1)} disabled={page === 1} aria-label="이전 페이지">
-            ‹
-          </button>
-          {pageNumbers.map((p) => (
-            <button key={p} className={p === page ? 'active' : ''} onClick={() => handlePageChange(p)}>
-              {p}
-            </button>
-          ))}
-          <button onClick={() => handlePageChange(page + 1)} disabled={page === totalPages} aria-label="다음 페이지">
-            ›
-          </button>
-          <button onClick={() => handlePageChange(totalPages)} disabled={page === totalPages} aria-label="마지막 페이지">
-            »
-          </button>
-        </nav>
-      )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {/* ─── 백그라운드 로딩 인디케이터 ─────────────────── */}
       {isLoading && products.length > 0 && <div className="background-loading">데이터 갱신 중...</div>}
