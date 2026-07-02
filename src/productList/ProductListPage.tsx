@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useProducts, PAGE_SIZE, type Product, type SortBy } from './useProducts';
 import ProductCard from './ProductCard';
+import { useWishlist } from './useWishlist';
+import { useRecentlyViewed } from './useRecentlyViewed';
 import './ProductListPage.css';
 
 // ─────────────────────────────────────────────────────────
@@ -66,43 +68,9 @@ export function ProductListPage() {
   });
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-  // ─── 위시리스트 (localStorage 동기화) ───────────────────
-  const [wishlist, setWishlist] = useState<number[]>(() => {
-    try {
-      const stored = localStorage.getItem('wishlist');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // ─── 최근 본 상품 (localStorage 동기화) ─────────────────
-  const [recentlyViewed, setRecentlyViewed] = useState<number[]>(() => {
-    try {
-      const stored = localStorage.getItem('recentlyViewed');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // ─── 위시리스트가 바뀔 때마다 localStorage 동기화 ───────
-  useEffect(() => {
-    try {
-      localStorage.setItem('wishlist', JSON.stringify(wishlist));
-    } catch {
-      // localStorage 사용 불가 시 무시
-    }
-  }, [wishlist]);
-
-  // ─── 최근 본 상품도 localStorage 동기화 ─────────────────
-  useEffect(() => {
-    try {
-      localStorage.setItem('recentlyViewed', JSON.stringify(recentlyViewed));
-    } catch {
-      // localStorage 사용 불가 시 무시
-    }
-  }, [recentlyViewed]);
+  // ─── 위시리스트 / 최근 본 상품 (localStorage 캡슐화) ────
+  const { wishlist, toggleWishlist } = useWishlist();
+  const { addRecentlyViewed } = useRecentlyViewed();
 
   // ─── 페이지가 바뀔 때 스크롤 맨 위로 ────────────────────
   useEffect(() => {
@@ -167,17 +135,6 @@ export function ProductListPage() {
     setSearchQuery('');
     setInStockOnly(false);
     setPage(1);
-  };
-
-  const handleWishlistToggle = (productId: number) => {
-    setWishlist((prev) => (prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]));
-  };
-
-  const handleProductClick = (productId: number) => {
-    setRecentlyViewed((prev) => {
-      const without = prev.filter((id) => id !== productId);
-      return [productId, ...without].slice(0, 10);
-    });
   };
 
   // ─── 페이지네이션 계산 (인라인) ─────────────────────────
@@ -281,7 +238,7 @@ export function ProductListPage() {
         {products.length === 0 ? (
           <div className="empty">조건에 맞는 상품이 없습니다.</div>
         ) : (
-          products.map((product) => <ProductCard key={product.id} product={product} searchQuery={searchQuery} isWished={wishlist.includes(product.id)} onProductClick={handleProductClick} onWishlistToggle={handleWishlistToggle} />)
+          products.map((product) => <ProductCard key={product.id} product={product} searchQuery={searchQuery} isWished={wishlist.includes(product.id)} onProductClick={addRecentlyViewed} onWishlistToggle={toggleWishlist} />)
         )}
       </section>
 
