@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useProducts, PAGE_SIZE, type Product, type SortBy } from './useProducts';
+import { useProductListParams } from './useProductListParams';
 import ProductCard from './ProductCard';
 import Pagination from './Pagination';
 import { useWishlist } from './useWishlist';
@@ -25,7 +26,6 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: 'price-desc', label: '가격 높은순' }
 ];
 
-// AI 생성 L25 - L34
 function isSortBy(value: string): value is SortBy {
   return SORT_OPTIONS.some((opt) => opt.value === value);
 }
@@ -42,20 +42,8 @@ function isViewMode(value: string): value is ViewMode {
 // ─────────────────────────────────────────────────────────
 
 export function ProductListPage() {
-  // ─── 필터 상태 ──────────────────────────────────────────
-  const [category, setCategory] = useState<'all' | Product['category']>('all');
-  const [minPrice, setMinPrice] = useState<number | ''>('');
-  const [maxPrice, setMaxPrice] = useState<number | ''>('');
-  const [sortBy, setSortBy] = useState<SortBy>('latest');
-
-  // ─── 검색 상태 ──────────────────────────────────────────
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // ─── 페이지네이션 상태 ─────────────────────────────aergearg─────
-  const [page, setPage] = useState(1);
-
-  // ─── 옵션 토글 ──────────────────────────────────────────
-  const [inStockOnly, setInStockOnly] = useState(false);
+  // ─── URL 상태 (필터·검색·페이지·정렬 단일 출처) ─────────
+  const { category, minPrice, maxPrice, sortBy, searchQuery, page, inStockOnly, setCategory, setMinPrice, setMaxPrice, setSortBy, setSearchQuery, setPage, setInStockOnly, reset: resetFilters } = useProductListParams();
 
   // ─── 서버 상태 ──────────────────────────────────────────
   const { products, totalCount, isLoading, error } = useProducts({
@@ -78,60 +66,31 @@ export function ProductListPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [page]);
 
-  // ─── 필터·검색·페이지 상태가 바뀔 때마다 URL 쿼리 동기화 ──
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (category !== 'all') params.set('category', category);
-    if (searchQuery) params.set('q', searchQuery);
-    if (page > 1) params.set('page', String(page));
-    if (sortBy !== 'latest') params.set('sort', sortBy);
-    if (minPrice !== '') params.set('minPrice', String(minPrice));
-    if (maxPrice !== '') params.set('maxPrice', String(maxPrice));
-    if (inStockOnly) params.set('inStock', 'true');
-    window.history.replaceState(null, '', `?${params.toString()}`);
-  }, [category, searchQuery, page, sortBy, minPrice, maxPrice, inStockOnly]);
-
   const handleCategoryChange = (cat: 'all' | Product['category']) => {
     setCategory(cat);
-    setPage(1);
   };
 
   const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     setMinPrice(v === '' ? '' : Number(v));
-    setPage(1);
   };
 
   const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     setMaxPrice(v === '' ? '' : Number(v));
-    setPage(1);
   };
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { value } = e.target;
     if (isSortBy(value)) setSortBy(value);
-    setPage(1);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setPage(1);
   };
 
   const handleInStockToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInStockOnly(e.target.checked);
-    setPage(1);
-  };
-
-  const handleResetFilters = () => {
-    setCategory('all');
-    setMinPrice('');
-    setMaxPrice('');
-    setSortBy('latest');
-    setSearchQuery('');
-    setInStockOnly(false);
-    setPage(1);
   };
 
   // ─── 페이지네이션 계산 (인라인) ─────────────────────────
@@ -199,7 +158,7 @@ export function ProductListPage() {
           </label>
         </div>
 
-        <button className="reset-button" onClick={handleResetFilters}>
+        <button className="reset-button" onClick={resetFilters}>
           필터 초기화
         </button>
       </section>
