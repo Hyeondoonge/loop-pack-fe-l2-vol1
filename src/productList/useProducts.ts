@@ -9,12 +9,13 @@ type UseProductsParams = {
   category: 'all' | Product['category'];
   minPrice: number | '';
   maxPrice: number | '';
+  inStockOnly: boolean;
   sortBy: SortBy;
   searchQuery: string;
   page: number;
 };
 
-export function useProducts({ category, minPrice, maxPrice, sortBy, searchQuery, page }: UseProductsParams) {
+export function useProducts({ category, minPrice, maxPrice, inStockOnly, sortBy, searchQuery, page }: UseProductsParams) {
   const [products, setProducts] = useState<Product[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,6 +34,7 @@ export function useProducts({ category, minPrice, maxPrice, sortBy, searchQuery,
       });
       if (minPrice !== '') params.set('minPrice', String(minPrice));
       if (maxPrice !== '') params.set('maxPrice', String(maxPrice));
+      if (inStockOnly) params.set('inStock', 'true');
       try {
         const res = await fetch(`/api/products?${params.toString()}`);
         if (!res.ok) throw new Error(`API 호출 실패 (status: ${res.status})`);

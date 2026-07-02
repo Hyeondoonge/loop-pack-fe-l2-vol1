@@ -49,18 +49,23 @@ export default function ProductCard({ product, searchQuery, isWished, onProductC
   );
 }
 
+// 검색어를 정규식에 안전하게 넣기 위한 escape (특수문자로 인한 RegExp 크래시 방지)
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // 검색어 하이라이팅 — JSX 반환 위해 .tsx 모듈 내 정의
-function highlightMatch(text: string, query: string) {
-  if (!query) return text;
-  const parts = text.split(new RegExp(`(${query})`, 'gi'));
-  return parts.map((part, i) =>
-    part.toLowerCase() === query.toLowerCase() ? (
-      // ponytail: index를 key로 사용 — split() 결과는 매 렌더 재계산되는 파생 배열이라 재정렬/삽입 없음, 각 조각도 무상태 leaf
-      <mark key={i} style={{ background: '#fff176', padding: 0 }}>
-        {part}
-      </mark>
-    ) : (
-      part
-    )
+const highlightMatch = (text: string, searchQuery: string) => {
+  if (!searchQuery) return <>{text}</>;
+  const parts = text.split(new RegExp(`(${escapeRegExp(searchQuery)})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === searchQuery.toLowerCase() ? (
+          <mark key={i} style={{ background: '#fff176', padding: 0 }}>
+            {part}
+          </mark>
+        ) : (
+          part
+        )
+      )}
+    </>
   );
-}
+};
