@@ -36,6 +36,14 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
       // non-null 단언(x!) 금지 — strictNullChecks가 잡은 null 위험을 ! 한 글자로 무력화하는 우회로 차단. if 가드로 좁혀라
       '@typescript-eslint/no-non-null-assertion': 'error',
+      // 미사용 변수 금지 — 단, 언더바(_) 접두사는 '의도적으로 접근하지 않는 값' 표기로 예외 허용
+      // (예: usePersistentState 반환 튜플에서 값은 안 쓰고 setter만 쓰는 write-only 훅)
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          destructuredArrayIgnorePattern: '^_'
+        }
+      ],
       // == 의 암묵 타입 변환(0 == '', null == undefined 등) 비교 버그 차단 — 항상 ===/!== 강제
       eqeqeq: 'error',
       // 의미없는 이름 금지, 코드 수정 빈번할 경우 고려하여 warn
