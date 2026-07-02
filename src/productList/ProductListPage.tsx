@@ -59,11 +59,11 @@ export function ProductListPage() {
     category,
     minPrice,
     maxPrice,
+    inStockOnly,
     sortBy,
     searchQuery,
     page
   });
-  const visibleProducts = inStockOnly ? products.filter((p) => p.stock > 0) : products;
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   // ─── 위시리스트 (localStorage 동기화) ───────────────────
@@ -278,10 +278,10 @@ export function ProductListPage() {
 
       {/* ─── 상품 그리드 ────────────────────────────────── */}
       <section className="product-grid" style={viewMode === 'list' ? { gridTemplateColumns: '1fr' } : undefined}>
-        {visibleProducts.length === 0 ? (
+        {products.length === 0 ? (
           <div className="empty">조건에 맞는 상품이 없습니다.</div>
         ) : (
-          visibleProducts.map((product) => <ProductCard key={product.id} product={product} searchQuery={searchQuery} isWished={wishlist.includes(product.id)} onProductClick={handleProductClick} onWishlistToggle={handleWishlistToggle} />)
+          products.map((product) => <ProductCard key={product.id} product={product} searchQuery={searchQuery} isWished={wishlist.includes(product.id)} onProductClick={handleProductClick} onWishlistToggle={handleWishlistToggle} />)
         )}
       </section>
 
