@@ -16,7 +16,7 @@ export function useProducts({ category, minPrice, maxPrice, inStockOnly, sortBy,
       setError(null);
       try {
         const data = await fetchProducts({ category, minPrice, maxPrice, inStockOnly, sortBy, searchQuery, page });
-        setProducts(data.products); // inStockOnly 필터 제거 — 렌더 파생으로 이동
+        setProducts(data.products);
         setTotalCount(data.totalCount);
       } catch (err) {
         setError(err instanceof Error ? err : new Error(String(err)));
@@ -25,7 +25,7 @@ export function useProducts({ category, minPrice, maxPrice, inStockOnly, sortBy,
       }
     };
     loadProducts();
-  }, [category, minPrice, maxPrice, sortBy, searchQuery, page]); // inStockOnly 제거
+  }, [category, minPrice, maxPrice, inStockOnly, sortBy, searchQuery, page]);
 
   return { products, totalCount, isLoading, error };
 }
