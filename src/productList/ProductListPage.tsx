@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useProducts, type Product, type SortBy } from './hooks/useProducts';
 import { useProductListParams } from './hooks/useProductListParams';
+import { useDebouncedValue } from './hooks/useDebouncedValue';
 import { PAGE_SIZE } from './service/productApi';
 import ProductCard from './components/ProductCard';
 import Pagination from './components/Pagination';
@@ -46,14 +47,15 @@ export function ProductListPage() {
   // ─── URL 상태 (필터·검색·페이지·정렬 단일 출처) ─────────
   const { category, minPrice, maxPrice, sortBy, searchQuery, page, inStockOnly, setCategory, setMinPrice, setMaxPrice, setSortBy, setSearchQuery, setPage, setInStockOnly, reset: resetFilters } = useProductListParams();
 
-  // ─── 서버 상태 ──────────────────────────────────────────
+  // ─── 서버 상태 (검색어는 debounce 후 반영 — 타이핑마다 재조회 방지) ─
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
   const { products, totalCount, isLoading, error } = useProducts({
     category,
     minPrice,
     maxPrice,
     inStockOnly,
     sortBy,
-    searchQuery,
+    searchQuery: debouncedSearchQuery,
     page
   });
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
