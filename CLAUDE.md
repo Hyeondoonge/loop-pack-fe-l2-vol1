@@ -46,6 +46,24 @@ React 19 + TypeScript + Vite 학습용 레포. 전역 기본 스택(Vue)이 아�
 
 - 비동기 로딩은 `Suspense`로, 에러는 `ErrorBoundary`로 처리한다.
 
+### 리스트 렌더링 key
+
+- 고유 식별자(id) 우선. 재정렬·삽입·삭제 없는 파생 배열 + 자체 상태 없는 항목인 경우에만 index 예외 허용(`react/no-array-index-key`: warn).
+
+## 컴포넌트 설계 원칙
+
+- 컴포넌트의 Props가 5개를 넘으면 설계를 재검토
+- children을 적극 활용해 합성(Composition) 우선
+- Props Drilling이 3단계 이상이면 Context 또는 상태 관리 도입 검토
+- 공통 컴포넌트는 비즈니스 로직을 포함하지 않음
+
+## 상태 분류 기준
+
+- 서버에서 오는 데이터 → 서버 상태 (추후 TanStack Query)
+- UI 전용 (모달 열림, 탭 선택) → 로컬 상태 (useState)
+- URL에 반영되어야 하는 것 (필터, 페이지, 검색어) → URL 상태
+- 여러 컴포넌트가 공유해야 하는 것 → Context 또는 전역 상태
+
 ## 코드 리뷰 규칙
 
 리뷰/작업 완료 전 점검:
