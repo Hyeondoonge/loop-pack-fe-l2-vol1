@@ -3,9 +3,12 @@ import { useSyncExternalStore, useCallback } from 'react';
 const CHANGE_EVENT = 'urlsearchparamschange';
 
 function subscribe(callback: () => void) {
-  // ponytail: pushState 안 씀 → popstate로 감지할 히스토리 이동 없음. 도입 시 여기에 popstate 리스너 추가
   window.addEventListener(CHANGE_EVENT, callback);
-  return () => window.removeEventListener(CHANGE_EVENT, callback);
+  window.addEventListener('popstate', callback); // 뒤로/앞으로 이동 시 재동기화
+  return () => {
+    window.removeEventListener(CHANGE_EVENT, callback);
+    window.removeEventListener('popstate', callback);
+  };
 }
 
 // 문자열 스냅샷 → 같은 search면 참조 동일, 무한 렌더 없음
@@ -18,7 +21,7 @@ export function useUrlSearchParams() {
   const setParams = useCallback((next: URLSearchParams) => {
     const qs = next.toString();
     const url = qs ? `?${qs}` : window.location.pathname;
-    window.history.replaceState(null, '', url); // ponytail: 히스토리 관리(뒤로가기 단위 복원) 불필요, 필요해지면 pushState로 전환
+    window.history.pushState(null, '', url); // 항상 새 엔트리를 쌓는다(뒤로가기로 이전 상태 복원)
     window.dispatchEvent(new Event(CHANGE_EVENT));
   }, []);
 
