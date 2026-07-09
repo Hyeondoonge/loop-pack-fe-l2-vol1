@@ -9,25 +9,11 @@
 //   - Esc / 오버레이 클릭으로 닫고, 열린 동안 배경 스크롤 잠금
 //   - (이번 주 범위 밖) 포커스 트랩·ARIA는 하지 않는다. compound + 이중 API에 집중.
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import styles from './dialog.module.css';
-
-interface DialogContextValue {
-  open: boolean;
-  setOpen: (next: boolean) => void;
-}
-
-const DialogContext = createContext<DialogContextValue | null>(null);
-
-function useDialogContext() {
-  const context = useContext(DialogContext);
-  if (!context) {
-    throw new Error('useDialogContext must be used within a Dialog');
-  }
-  return context;
-}
+import { DialogContext, useDialogContext } from './DialogContext';
 
 interface DialogProps {
   children: React.ReactNode;
