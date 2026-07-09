@@ -10,6 +10,7 @@
 //   - (이번 주 범위 밖) 포커스 트랩·ARIA는 하지 않는다. compound + 이중 API에 집중.
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import styles from './dialog.module.css';
 
@@ -20,12 +21,6 @@ interface DialogContextValue {
 
 const DialogContext = createContext<DialogContextValue | null>(null);
 
-function Dialog({ children }: { children: React.ReactNode }) {
-  // 상태 관리
-  const [open, setOpen] = useState(false);
-  return <DialogContext.Provider value={{ open, setOpen }}>{children}</DialogContext.Provider>;
-}
-
 function useDialogContext() {
   const context = useContext(DialogContext);
   if (!context) {
@@ -34,13 +29,34 @@ function useDialogContext() {
   return context;
 }
 
+interface DialogProps {
+  children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (next: boolean) => void;
+}
+
+function Dialog({ children, open: openProp, onOpenChange }: DialogProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : uncontrolledOpen;
+
+  const setOpen = (next: boolean) => {
+    if (!isControlled) {
+      setUncontrolledOpen(next);
+    }
+    onOpenChange?.(next);
+  };
+
+  return <DialogContext.Provider value={{ open, setOpen }}>{children}</DialogContext.Provider>;
+}
 function DialogTrigger({ children }: { children: React.ReactNode }) {
   // 이벤트 연결
   const { setOpen } = useDialogContext();
   return <button onClick={() => setOpen(true)}>{children}</button>;
 }
 
-function DialogOverlay({ children }: { children: React.ReactNode }) {
+function DialogOverlay() {
   const { open, setOpen } = useDialogContext();
 
   useEffect(() => {
@@ -60,15 +76,14 @@ function DialogOverlay({ children }: { children: React.ReactNode }) {
   if (!open) {
     return null;
   }
-  return (
-    <div className={styles.overlay} onClick={() => setOpen(false)}>
-      {children}
-    </div>
-  );
+
+  const handleOverlayClick = () => setOpen(false);
+
+  return createPortal(<div className={styles.overlay} onClick={handleOverlayClick} />, document.body);
 }
 
-function DialogContent({ children }: { children: React.ReactNode }) {
-  const { setOpen } = useDialogContext();
+function DialogContent({ children }: { children?: React.ReactNode }) {
+  const { open, setOpen } = useDialogContext();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -82,7 +97,11 @@ function DialogContent({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  return <div onClick={(e) => e.stopPropagation()}>{children}</div>;
+  if (!open) {
+    return null;
+  }
+
+  return createPortal(<div className={styles.content}>{children}</div>, document.body);
 }
 
 function DialogTitle({ children }: { children: React.ReactNode }) {
