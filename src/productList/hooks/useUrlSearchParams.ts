@@ -21,7 +21,7 @@ export function useUrlSearchParams() {
   const setParams = useCallback((next: URLSearchParams) => {
     const qs = next.toString();
     const url = qs ? `?${qs}` : window.location.pathname;
-    window.history.pushState(null, '', url); // 항상 새 엔트리를 쌓는다(뒤로가기로 이전 상태 복원)
+    window.history.pushState(null, '', url);
     window.dispatchEvent(new Event(CHANGE_EVENT));
   }, []);
 

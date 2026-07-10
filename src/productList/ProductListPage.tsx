@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useProducts, type Product, type SortBy } from './hooks/useProducts';
 import { useProductListParams } from './hooks/useProductListParams';
+import { useDebounceValue } from './hooks/useDebounceValue';
 import { PAGE_SIZE } from './service/productApi';
 import ProductCard from './components/ProductCard';
 import Pagination from './components/Pagination';
@@ -46,14 +47,20 @@ export function ProductListPage() {
   // ─── URL 상태 (필터·검색·페이지·정렬 단일 출처) ─────────
   const { category, minPrice, maxPrice, sortBy, searchQuery, page, inStockOnly, setCategory, setMinPrice, setMaxPrice, setSortBy, setSearchQuery, setPage, setInStockOnly, reset: resetFilters } = useProductListParams();
 
+  // ─── 타이핑 입력은 디바운스 → API 호출은 안정된 값에만 의존 ───
+  // 입력창 표시는 위 URL 파생값(즉시), API 트리거만 디바운스된 값을 사용한다.
+  const debouncedSearchQuery = useDebounceValue(searchQuery);
+  const debouncedMinPrice = useDebounceValue(minPrice);
+  const debouncedMaxPrice = useDebounceValue(maxPrice);
+
   // ─── 서버 상태 ──────────────────────────────────────────
   const { products, totalCount, isLoading, error } = useProducts({
     category,
-    minPrice,
-    maxPrice,
+    minPrice: debouncedMinPrice,
+    maxPrice: debouncedMaxPrice,
     inStockOnly,
     sortBy,
-    searchQuery,
+    searchQuery: debouncedSearchQuery,
     page
   });
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
