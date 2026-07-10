@@ -71,7 +71,7 @@ export function ProductListPage() {
   useEffect(() => setMaxPriceDraft(maxPrice), [maxPrice]);
 
   // ─── 서버 상태 (URL이 유일한 출처) ─────────────────────
-  const { products, totalCount, isLoading, error } = useProducts({
+  const { products, totalCount, isLoading, error, retry, canRetry } = useProducts({
     category,
     minPrice,
     maxPrice,
@@ -130,7 +130,7 @@ export function ProductListPage() {
     return (
       <div className="error">
         <p>오류가 발생했습니다: {error.message}</p>
-        <button onClick={() => window.location.reload()}>다시 시도</button>
+        {canRetry ? <button onClick={retry}>다시 시도</button> : <p>문제가 지속되고 있습니다. 새로고침하거나 필터를 변경해주세요.</p>}
       </div>
     );
   }
