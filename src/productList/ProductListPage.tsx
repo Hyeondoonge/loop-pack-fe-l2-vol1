@@ -47,37 +47,19 @@ export function ProductListPage() {
   // ─── URL 상태 (필터·검색·페이지·정렬 단일 출처) ─────────
   const { category, minPrice, maxPrice, sortBy, searchQuery, page, inStockOnly, setCategory, setMinPrice, setMaxPrice, setSortBy, setSearchQuery, setPage, setInStockOnly, reset: resetFilters } = useProductListParams();
 
-  // ─── 타이핑 입력 표시 전용 draft — URL(SSOT)에는 디바운스 종료 시점에만 반영 ───
-  const [searchQueryDraft, setSearchQueryDraft] = useState(searchQuery);
-  const [minPriceDraft, setMinPriceDraft] = useState<number | ''>(minPrice);
-  const [maxPriceDraft, setMaxPriceDraft] = useState<number | ''>(maxPrice);
+  // ─── 타이핑 입력은 URL에 즉시 반영(SSOT), API 요청만 디바운스 ───
+  const debouncedSearchQuery = useDebounceValue(searchQuery);
+  const debouncedMinPrice = useDebounceValue(minPrice);
+  const debouncedMaxPrice = useDebounceValue(maxPrice);
 
-  const debouncedSearchQuery = useDebounceValue(searchQueryDraft);
-  const debouncedMinPriceDraft = useDebounceValue(minPriceDraft);
-  const debouncedMaxPriceDraft = useDebounceValue(maxPriceDraft);
-
-  useEffect(() => {
-    if (debouncedSearchQuery !== searchQuery) setSearchQuery(debouncedSearchQuery);
-  }, [debouncedSearchQuery, searchQuery, setSearchQuery]);
-  useEffect(() => {
-    if (debouncedMinPriceDraft !== minPrice) setMinPrice(debouncedMinPriceDraft);
-  }, [debouncedMinPriceDraft, minPrice, setMinPrice]);
-  useEffect(() => {
-    if (debouncedMaxPriceDraft !== maxPrice) setMaxPrice(debouncedMaxPriceDraft);
-  }, [debouncedMaxPriceDraft, maxPrice, setMaxPrice]);
-
-  useEffect(() => setSearchQueryDraft(searchQuery), [searchQuery]);
-  useEffect(() => setMinPriceDraft(minPrice), [minPrice]);
-  useEffect(() => setMaxPriceDraft(maxPrice), [maxPrice]);
-
-  // ─── 서버 상태 (URL이 유일한 출처) ─────────────────────
+  // ─── 서버 상태 ──────────────────────────────────────────
   const { products, totalCount, isLoading, error, retry, canRetry } = useProducts({
     category,
-    minPrice,
-    maxPrice,
+    minPrice: debouncedMinPrice,
+    maxPrice: debouncedMaxPrice,
     inStockOnly,
     sortBy,
-    searchQuery,
+    searchQuery: debouncedSearchQuery,
     page
   });
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -97,12 +79,12 @@ export function ProductListPage() {
 
   const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
-    setMinPriceDraft(v === '' ? '' : Number(v));
+    setMinPrice(v === '' ? '' : Number(v));
   };
 
   const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
-    setMaxPriceDraft(v === '' ? '' : Number(v));
+    setMaxPrice(v === '' ? '' : Number(v));
   };
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -111,7 +93,7 @@ export function ProductListPage() {
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQueryDraft(e.target.value);
+    setSearchQuery(e.target.value);
   };
 
   const handleInStockToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,9 +143,9 @@ export function ProductListPage() {
         <div className="filter-group">
           <label>가격 범위</label>
           <div className="price-range">
-            <input type="number" placeholder="최소" value={minPriceDraft} onChange={handleMinPriceChange} min={0} />
+            <input type="number" placeholder="최소" value={minPrice} onChange={handleMinPriceChange} min={0} />
             <span>~</span>
-            <input type="number" placeholder="최대" value={maxPriceDraft} onChange={handleMaxPriceChange} min={0} />
+            <input type="number" placeholder="최대" value={maxPrice} onChange={handleMaxPriceChange} min={0} />
           </div>
         </div>
 
@@ -190,7 +172,7 @@ export function ProductListPage() {
 
       {/* ─── 검색 + 정렬 + 보기 모드 ───────────────────── */}
       <section className="search-sort">
-        <input type="search" placeholder="상품 검색..." value={searchQueryDraft} onChange={handleSearchChange} className="search-input" />
+        <input type="search" placeholder="상품 검색..." value={searchQuery} onChange={handleSearchChange} className="search-input" />
         <select value={sortBy} onChange={handleSortChange}>
           {SORT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
