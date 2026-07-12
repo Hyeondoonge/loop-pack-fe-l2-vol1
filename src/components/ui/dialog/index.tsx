@@ -36,13 +36,17 @@ function Dialog({ children, open: openProp, onOpenChange }: DialogProps) {
 
   return <DialogContext.Provider value={{ open, setOpen }}>{children}</DialogContext.Provider>;
 }
-function DialogTrigger({ children }: { children: React.ReactNode }) {
+function DialogTrigger({ children, className }: { children: React.ReactNode; className?: string }) {
   // 이벤트 연결
   const { setOpen } = useDialogContext();
-  return <button onClick={() => setOpen(true)}>{children}</button>;
+  return (
+    <button onClick={() => setOpen(true)} className={className}>
+      {children}
+    </button>
+  );
 }
 
-function DialogOverlay() {
+function DialogOverlay({ className }: { className?: string }) {
   const { open, setOpen } = useDialogContext();
 
   useEffect(() => {
@@ -65,10 +69,10 @@ function DialogOverlay() {
 
   const handleOverlayClick = () => setOpen(false);
 
-  return createPortal(<div className={styles.overlay} onClick={handleOverlayClick} />, document.body);
+  return createPortal(<div className={className ? `${styles.overlay} ${className}` : styles.overlay} onClick={handleOverlayClick} />, document.body);
 }
 
-function DialogContent({ children }: { children?: React.ReactNode }) {
+function DialogContent({ children, className }: { children?: React.ReactNode; className?: string }) {
   const { open, setOpen } = useDialogContext();
 
   useEffect(() => {
@@ -87,20 +91,24 @@ function DialogContent({ children }: { children?: React.ReactNode }) {
     return null;
   }
 
-  return createPortal(<div className={styles.content}>{children}</div>, document.body);
+  return createPortal(<div className={className ? `${styles.content} ${className}` : styles.content}>{children}</div>, document.body);
 }
 
-function DialogTitle({ children }: { children: React.ReactNode }) {
-  return <div>{children}</div>;
+function DialogTitle({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={className}>{children}</div>;
 }
 
-function DialogDescription({ children }: { children: React.ReactNode }) {
-  return <div>{children}</div>;
+function DialogDescription({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={className}>{children}</div>;
 }
 
-function DialogClose() {
+function DialogClose({ className }: { className?: string }) {
   const { setOpen } = useDialogContext();
-  return <button onClick={() => setOpen(false)}>Close</button>;
+  return (
+    <button onClick={() => setOpen(false)} className={className}>
+      닫기
+    </button>
+  );
 }
 
 Dialog.Trigger = DialogTrigger;
