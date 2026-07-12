@@ -3,12 +3,14 @@
   --foreground: #171717;
 }
 
+/* 컴포넌트 쪽 다크모드 미대응으로 임시 비활성화
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
+*/
 
 html {
   height: 100%;
@@ -42,8 +44,10 @@ a {
   text-decoration: none;
 }
 
+/*
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
   }
 }
+*/
