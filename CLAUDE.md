@@ -21,7 +21,7 @@ React 19 + TypeScript + Vite 학습용 레포. 전역 기본 스택(Vue)이 아�
 
 ### 컴포넌트 구조
 
-- 함수형 컴포넌트 + Hooks만 사용. 클래스 컴포넌트 금지
+- 함수형 컴포넌트 + Hooks만 사용. 클래스 컴포넌트 금지(단, `getDerivedStateFromError`가 클래스 컴포넌트에만 존재하는 React 구조적 제약으로 인해 에러 바운더리는 예외 — `react-error-boundary`의 `ErrorBoundary` 사용)
 - 파생 가능한 값의 useState 사용 금지
 - 컴포넌트 파일/함수명은 PascalCase, 1파일 1주요 컴포넌트(파일당 `export default` 1개).
 - 기본 코드 분리 단위는 페이지 / 컴포넌트 / API
