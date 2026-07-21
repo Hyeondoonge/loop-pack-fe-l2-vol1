@@ -6,7 +6,7 @@ export function toProductListQuery(filters: { q: string; category: CategoryId | 
     q: filters.q.trim().toLocaleLowerCase('ko'),
     category: filters.category,
     sort: filters.sort,
-    page: Math.max(1, filters.page),
+    page: filters.page,
     pageSize: PRODUCT_PAGE_SIZE
   };
 }

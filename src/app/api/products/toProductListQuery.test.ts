@@ -13,12 +13,7 @@ describe('toProductListQuery', () => {
     expect(result.q).toBe('나이키  운동화');
   });
 
-  it('clamps page below 1 up to 1', () => {
-    expect(toProductListQuery({ q: '', category: 'all', sort: 'latest', page: 0 }).page).toBe(1);
-    expect(toProductListQuery({ q: '', category: 'all', sort: 'latest', page: -5 }).page).toBe(1);
-  });
-
-  it('passes category and sort through unchanged and sets the shared page size', () => {
+  it('passes category, sort and page through unchanged and sets the shared page size', () => {
     const result = toProductListQuery({ q: '', category: 'casual', sort: 'price-asc', page: 3 });
     expect(result.category).toBe('casual');
     expect(result.sort).toBe('price-asc');
