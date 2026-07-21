@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { PRODUCT_PAGE_SIZE, toProductListQuery } from './toProductListQuery';
+import { PRODUCT_PAGE_SIZE } from '@/productList/productListConstants';
+import { toProductListQuery } from './toProductListQuery';
 
 describe('toProductListQuery', () => {
   it('trims surrounding whitespace and lowercases with the ko locale', () => {

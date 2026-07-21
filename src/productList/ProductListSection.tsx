@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import SearchInput from '@/productList/SearchInput';
 import { useProductListFilters } from '@/productList/hooks/useProductListFilters';
-import { CATEGORY_OPTIONS, SORT_OPTIONS } from '@/productList/productListFilters';
+import { CATEGORY_OPTIONS, SORT_OPTIONS } from '@/productList/productListConstants';
 import { resolvePageOverflow } from '@/productList/resolvePageOverflow';
 import { productQueries } from '@/app/api/products/productQueries';
 import type { CategoryId, Product, ProductSort } from '@/types/commerce';
