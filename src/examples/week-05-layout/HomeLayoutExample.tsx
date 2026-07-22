@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import ProductActions from '@/components/commerce/ProductActions/ProductActions';
 import './week-05-layout.css';
 
 /**
@@ -12,14 +13,6 @@ import './week-05-layout.css';
 export function HomeLayoutExample() {
   return (
     <main className="week05-page">
-      <header className="week05-header">
-        <Link href="/">Commerce</Link>
-        <nav aria-label="주요 메뉴">
-          <Link href="/products">상품</Link>
-          <span>위시리스트 0</span>
-          <span>장바구니 0</span>
-        </nav>
-      </header>
       <section className="week05-hero">
         <p>배너 설명</p>
         <h1>홈 배너 제목</h1>
@@ -50,14 +43,9 @@ export function HomeLayoutExample() {
                 <p>브랜드</p>
                 <h3>{title === '인기 상품' ? '[11월 20일 예약배송] Winter Rocky Pants 2color 윈터 로키팬츠 OG' : 'WOMAN GNRL 케이블 풀오버 [IVORY] / WBC3L05502'}</h3>
                 <strong>0원</strong>
-                <div>
-                  <button type="button" aria-label={`${title} ${index + 1}번 상품 위시리스트`} aria-pressed={false}>
-                    찜
-                  </button>
-                  <button type="button" aria-label={`${title} ${index + 1}번 상품 장바구니`} aria-pressed={false}>
-                    담기
-                  </button>
-                </div>
+                {/* AI 생성: E번 결정 — 홈 서버 상태 연동 전이라 실제 상품 ID가 없다. 카드 key와 같은 `${title}-${index}`를
+                    임시 ID로 써서 담기·찜 핸들러만 먼저 연결한다. 실제 데이터 연동 시 product.id로 교체한다. */}
+                <ProductActions productId={`${title}-${index}`} productLabel={`${title} ${index + 1}번 상품`} />
               </article>
             ))}
           </div>

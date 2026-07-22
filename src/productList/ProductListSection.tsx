@@ -2,13 +2,14 @@
 
 import { useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import SearchInput from '@/productList/SearchInput';
 import { useProductListFilters } from '@/productList/hooks/useProductListFilters';
 import { CATEGORY_OPTIONS, SORT_OPTIONS } from '@/productList/productListConstants';
 import { resolvePageOverflow } from '@/productList/resolvePageOverflow';
 import { productQueries } from '@/app/api/products/productQueries';
+import { formatPrice } from '@/lib/formatPrice';
+import ProductActions from '@/components/commerce/ProductActions/ProductActions';
 import type { CategoryId, Product, ProductSort } from '@/types/commerce';
 import '@/examples/week-05-layout/week-05-layout.css';
 
@@ -66,16 +67,8 @@ function ProductResults({ products, page, totalPages, onPageChange }: ProductRes
             <Image className="week05-image" src={product.image} alt={product.name} width={400} height={400} />
             <p>{product.brand}</p>
             <h2>{product.name}</h2>
-            <strong>{product.price.toLocaleString()}원</strong>
-            {/* AI 생성: 찜/담기 버튼은 다음 단계(Zustand 전역 상태)에서 연결할 자리 표시용이다. 예시 레이아웃 그대로 두고 핸들러를 붙이지 않는다. */}
-            <div>
-              <button type="button" aria-label={`${product.name} 위시리스트`} aria-pressed={false}>
-                찜
-              </button>
-              <button type="button" aria-label={`${product.name} 장바구니`} aria-pressed={false}>
-                담기
-              </button>
-            </div>
+            <strong>{formatPrice(product.price)}</strong>
+            <ProductActions productId={product.id} productLabel={product.name} />
           </article>
         ))}
       </div>
@@ -118,12 +111,6 @@ export default function ProductListSection() {
 
   return (
     <main className="week05-page">
-      <header className="week05-header">
-        <Link href="/">Commerce</Link>
-        <nav aria-label="주요 메뉴">
-          <Link href="/products">상품</Link>
-        </nav>
-      </header>
       <section className="week05-section">
         <h1>상품 목록</h1>
         <div className="week05-filters">
