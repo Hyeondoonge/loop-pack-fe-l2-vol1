@@ -20,16 +20,6 @@ interface ProductResultsProps {
   onPageChange: (value: number) => void;
 }
 
-// AI 생성: 설계 문서에 옵션 라벨 맵이 없어 직접 정의한다. 카테고리 라벨은 ProductListLayoutExample.tsx의 문구를 그대로 옮겼다.
-const CATEGORY_LABELS: Record<(typeof CATEGORY_OPTIONS)[number], string> = {
-  all: '전체',
-  casual: '캐주얼',
-  fashion: '패션',
-  goods: '뷰티·잡화',
-  home: '홈',
-  digital: '디지털'
-};
-
 // AI 생성: 설계 문서에 옵션 라벨 맵이 없어 직접 정의한다.
 const SORT_LABELS: Record<(typeof SORT_OPTIONS)[number], string> = {
   latest: '최신순',
@@ -118,9 +108,11 @@ export default function ProductListSection() {
           <label>
             카테고리
             <select name="category" value={filters.category} onChange={(event) => handleCategoryChange(event.target.value)}>
-              {CATEGORY_OPTIONS.map((option) => (
-                <option value={option} key={option}>
-                  {CATEGORY_LABELS[option]}
+              {/* AI 생성: client-state-design.md 12번 — 'all'은 서버 categories에 없는 필터 개념이라 client가 붙이는 합성 옵션. 나머지 라벨은 서버 응답(productList.categories)에서 그린다. */}
+              <option value="all">전체</option>
+              {productList.categories.map((category) => (
+                <option value={category.id} key={category.id}>
+                  {category.name}
                 </option>
               ))}
             </select>
