@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useProducts, type Product, type SortBy } from './hooks/useProducts';
 import { useProductListParams } from './hooks/useProductListParams';
+import { useDebounceValue } from './hooks/useDebounceValue';
 import { PAGE_SIZE } from './service/productApi';
 import ProductCard from './components/ProductCard';
 import Pagination from './components/Pagination';
@@ -46,14 +47,19 @@ export function ProductListPage() {
   // ─── URL 상태 (필터·검색·페이지·정렬 단일 출처) ─────────
   const { category, minPrice, maxPrice, sortBy, searchQuery, page, inStockOnly, setCategory, setMinPrice, setMaxPrice, setSortBy, setSearchQuery, setPage, setInStockOnly, reset: resetFilters } = useProductListParams();
 
+  // ─── 타이핑 입력은 URL에 즉시 반영(SSOT), API 요청만 디바운스 ───
+  const debouncedSearchQuery = useDebounceValue(searchQuery);
+  const debouncedMinPrice = useDebounceValue(minPrice);
+  const debouncedMaxPrice = useDebounceValue(maxPrice);
+
   // ─── 서버 상태 ──────────────────────────────────────────
-  const { products, totalCount, isLoading, error } = useProducts({
+  const { products, totalCount, isLoading, error, retry, canRetry } = useProducts({
     category,
-    minPrice,
-    maxPrice,
+    minPrice: debouncedMinPrice,
+    maxPrice: debouncedMaxPrice,
     inStockOnly,
     sortBy,
-    searchQuery,
+    searchQuery: debouncedSearchQuery,
     page
   });
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -106,7 +112,7 @@ export function ProductListPage() {
     return (
       <div className="error">
         <p>오류가 발생했습니다: {error.message}</p>
-        <button onClick={() => window.location.reload()}>다시 시도</button>
+        {canRetry ? <button onClick={retry}>다시 시도</button> : <p>문제가 지속되고 있습니다. 새로고침하거나 필터를 변경해주세요.</p>}
       </div>
     );
   }
