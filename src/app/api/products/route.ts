@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { categories, products, waitForMockApi } from '@/app/api/_data/commerce';
+import { categories, waitForMockApi } from '@/app/api/_data/commerce';
+import { getProductListData } from '@/app/api/products/getProductListData';
 import type { ApiErrorResponse, MockApiScenario, ProductListResponse, ProductSort } from '@/types/commerce';
 
 const sortValues = ['latest', 'popular', 'price-asc', 'price-desc'] as const satisfies readonly ProductSort[];
@@ -44,39 +45,5 @@ export async function GET(request: NextRequest): Promise<NextResponse<ProductLis
     return NextResponse.json({ message: '상품 목록을 불러오지 못했습니다.' }, { status: 500 });
   }
 
-  const filteredProducts = products.filter((product) => {
-    const matchesCategory = category === null || category === 'all' || product.category === category;
-    const searchable = `${product.brand} ${product.name}`.toLocaleLowerCase('ko');
-    return matchesCategory && searchable.includes(q);
-  });
-
-  const sortedProducts = [...filteredProducts];
-
-  if (sort !== null) {
-    sortedProducts.sort((a, b) => {
-      switch (sort) {
-        case 'popular':
-          return b.reviewCount - a.reviewCount || b.rating - a.rating;
-        case 'price-asc':
-          return a.price - b.price;
-        case 'price-desc':
-          return b.price - a.price;
-        case 'latest':
-          return Date.parse(b.createdAt) - Date.parse(a.createdAt);
-      }
-    });
-  }
-
-  const start = (page - 1) * pageSize;
-  const pagedProducts = sortedProducts.slice(start, start + pageSize);
-  const responseProducts = scenario === 'empty' ? [] : pagedProducts;
-  const totalCount = scenario === 'empty' ? 0 : filteredProducts.length;
-
-  return NextResponse.json({
-    products: responseProducts,
-    categories,
-    totalCount,
-    page,
-    pageSize
-  });
+  return NextResponse.json(getProductListData({ q, category, sort, page, pageSize, scenario }));
 }
