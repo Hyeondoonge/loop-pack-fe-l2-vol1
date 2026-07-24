@@ -24,9 +24,17 @@
 /* AI 생성: 설계 문서 4번은 헤더를 layout.tsx로 옮기는 것만 정했다. week05-page 밖(main 바깥)에서도
    같은 좌우 여백으로 정렬되도록 래퍼 하나를 추가한다. */
 .week05-header-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: 100%;
+  padding-top: 24px;
+  background: #fff;
+}
+
+.week05-header-bar > .week05-header {
   width: min(100% - 32px, 1200px);
   margin: 0 auto;
-  padding-top: 24px;
 }
 
 .week05-hero {
