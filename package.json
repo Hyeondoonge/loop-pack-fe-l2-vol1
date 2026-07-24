@@ -23,7 +23,7 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{json,md,css}": [
+    "*.{json,css}": [
       "prettier --write"
     ]
   },
@@ -37,6 +37,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@tanstack/react-query-devtools": "^5.101.4",
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
