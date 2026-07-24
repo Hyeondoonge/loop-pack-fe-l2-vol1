@@ -1,4 +1,7 @@
-import { createParser, parseAsString, parseAsStringLiteral } from 'nuqs';
+// AI 생성: 이 parser 맵은 클라이언트 훅(useProductListFilters)과 서버 page.tsx의 createLoader가 함께
+// import한다. 'nuqs' 메인 엔트리는 'use client'라 서버에서 부르면 실패하므로, 서버·클라이언트 양쪽에서
+// 안전한 'nuqs/server'에서 parser 빌더를 가져온다(동일 parser 객체라 클라이언트 훅 동작은 그대로다).
+import { createParser, parseAsString, parseAsStringLiteral } from 'nuqs/server';
 import { CATEGORY_OPTIONS, FIRST_PAGE, SORT_OPTIONS } from '@/productList/productListConstants';
 
 // AI 생성: url-state-design.md 6번 항목 — page 하한(0 이하)을 parser 단계에서 첫 페이지로 clamp한다.
