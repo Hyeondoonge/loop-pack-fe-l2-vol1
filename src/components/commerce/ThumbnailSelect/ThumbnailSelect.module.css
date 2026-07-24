@@ -1,0 +1,74 @@
+/* 썸네일 전용 스타일 — 이미지+텍스트 가로 배치 + 할인율.
+   chevron 회전은 [data-open] 상태 셀렉터로만 분기(JS 분기 없음). */
+
+.box {
+  border: 1.5px solid #333333;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.list {
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.row {
+  padding: 16px;
+  cursor: pointer;
+  background: transparent;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.row + .row {
+  border-top: 1px solid #eef0f2;
+}
+.row.highlighted {
+  background: #f3f5f7;
+}
+.thumb {
+  width: 48px;
+  height: 48px;
+}
+.priceLine {
+  margin-top: 4px;
+}
+.discount {
+  color: #ff3b30;
+  font-weight: 700;
+}
+.badge {
+  background: #f3f5f7;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.trigger {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  background: none;
+  font-weight: 700;
+}
+.chevron {
+  display: inline-block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
+}
+[data-open='true'] .chevron {
+  transform: rotate(180deg);
+  color: #000;
+}
