@@ -7,12 +7,6 @@ import { getQueryClient } from '@/app/getQueryClient';
 import { productQueries } from '@/app/api/products/productQueries';
 import { productListParsers } from '@/productList/productListFilters';
 
-// AI 생성: docs/work/week-05/ssr-fetch-fix-plan.md — nuqs 클라이언트 훅(useQueryStates)은 Next의
-// 동적 렌더링을 유발하지 않아 기본적으로 이 페이지가 정적 생성(Static) 대상이 된다. 그러면 서버 렌더가
-// searchParams를 읽지 못해 항상 기본 필터(page=1 등) 데이터만 담긴다. URL 필터에 맞는 서버 렌더를 위해
-// 동적 렌더링을 강제한다(홈 page.tsx와 동일).
-export const dynamic = 'force-dynamic';
-
 // AI 생성: 클라이언트 useProductListFilters와 동일한 productListParsers로 searchParams를 파싱해야
 // 서버·클라이언트 쿼리 키가 일치한다(키가 어긋나면 hydration이 캐시 miss로 조용히 실패한다).
 const loadProductListFilters = createLoader(productListParsers);
