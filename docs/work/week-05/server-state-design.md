@@ -6,6 +6,7 @@
 ## 1. 캐시 정책 수치
 
 ### 전역 default staleTime
+
 - 결정: 20s
 - 근거:
   - SSR 렌더링 시 중복 쿼리 요청 방지
@@ -13,17 +14,19 @@
   - TanStack Query default staleTime은 0이므로, 이를 20s로 늘려 기본을 절약형으로 두고 실시간 갱신이 중요한 쿼리만 0으로 개별 오버라이드하는 방향으로 설계
 
 ### 홈 query staleTime
-- 결정: 짧은 시간 유지
-- 근거: 개인화 추천 데이터. 유저의 관심 상품에 따라 목록이 실시간 업데이트될 수 있어 목록 query보다 신선도 요구가 높음
+
+- 결정: 전역 default(20s) 상속
+- 근거: 개인화 추천 데이터. 유저의 관심 상품에 따라 목록이 실시간 업데이트될 수 있음을 고려
 
 ### 목록 query staleTime
-- 결정: 5m
+
+- 결정: 전역 default(20s) 상속
 - 근거:
-  - 목록 페이지 ↔ 상세 페이지 간 화면 왕복이 잦고 스크롤 위치 복원의 가치가 큼. 최신 데이터 재서빙보다 이전 목록 데이터를 유지해 탐색 경험이 끊기지 않는 것을 우선
-  - API 재요청 방어: staleTime이 짧으면 왕복할 때마다 캐시가 즉시 만료되어 매번 재요청이 몰림. 5m을 유지하면 그 사이 왕복은 캐시를 그대로 재사용해 요청이 몰리지 않음
-  - 보고 있던 위치의 안정성 유지: 상세 페이지 갔다 돌아왔을 때 목록 데이터가 그대로 유지되어야 순서·구성이 바뀌지 않고, 스크롤 위치도 같은 데이터 위에서 안정적으로 복원됨
+  - `products/page.tsx`에서 `prefetchQuery` → `dehydrate` → `HydrationBoundary`로 SSR 프리페치를 쓴다. staleTime을 0으로 두면 hydrate된 쿼리가 mount 시 `refetchOnMount`(기본 true) 조건에 걸려 즉시 background refetch가 발생해(TanStack Query 공식 SSR/Hydration 가이드), 서버가 렌더 직전 받아온 데이터를 클라이언트가 곧장 한 번 더 요청하는 중복 요청이 트래픽 많은 페이지에서 매 페이지뷰마다 발생한다. 20s 상속은 이를 방지한다.
+  - 담기/주문 시점의 가격·재고 정합성은 staleTime이 아니라 서버 재검증 계약의 몫(범위 밖, 후속)이므로, staleTime을 짧게 잡아 정합성을 보장하려 할 필요가 없다.
 
 ### gcTime
+
 - 결정: 기본값 5분 유지
 - 근거:
   - 홈·목록 모두 유저가 다시 돌아올 가능성이 있는 화면이라 gcTime을 늘리는 방향도 검토
@@ -35,6 +38,7 @@
 > 참조: https://velog.io/@ubin_ing/react-query-options-basement-pattern
 
 ### query key 팩토리 구조
+
 - 결정: 도메인별로 query key와 query option을 구조화한 팩토리 객체를 둔다 (`productQueries`, `homeQueries` 등).
 - 근거: 도메인에 대한 캐시 정책을 한 곳에서 중앙집중식으로 관리할 수 있어, 일관된 캐시 정책과 쿼리 간 응집성이 확보됨.
 - 코드 예시:
@@ -46,9 +50,9 @@ const productQueries = {
   list: (): UseQueryOptions<Product[]> =>
     queryOptions({
       queryKey: [...productQueries.all(), 'list'],
-      queryFn: getProductList,
-    }),
-}
+      queryFn: getProductList
+    })
+};
 
 // homeQueries.ts
 const homeQueries = {
@@ -56,12 +60,13 @@ const homeQueries = {
   detail: (id: string): UseQueryOptions<HomeDetail> =>
     queryOptions({
       queryKey: [...homeQueries.all(), id],
-      queryFn: () => getHomeDetail(id),
-    }),
-}
+      queryFn: () => getHomeDetail(id)
+    })
+};
 ```
 
 ### product list 필터 query key 설계
+
 - 결정: 필터를 객체 형태로 query key에 포함하되, 정규화(normalize)를 거쳐 넣는다. 정규화 시 실제로 param 전달이 필요한 필드를 정확히 분석하고, 필요한 경우에만 도메인 순수 함수로 정규화 로직을 추가한다. 필요 없으면 추가하지 않는다.
 - 근거:
   - 상품 목록 데이터는 필터링 상태에 의존해 재요청되어야 하는 값이므로, 필터가 query key에 반영되어야 함
@@ -89,12 +94,12 @@ export type ProductListQuery = {
 
 #### 정규화가 불필요한 대상 — 도구가 이미 보장
 
-| 대상 | 불필요한 이유 |
-| --- | --- |
-| 객체 필드 순서 | `hashKey`가 `Object.keys(val).sort()`로 정렬한 뒤 직렬화한다(`@tanstack/query-core@5.101.2`, `build/modern/utils.js:85-93`) → `{q, category}`와 `{category, q}`는 동일 해시 |
-| optional 필드의 `undefined` | `JSON.stringify`가 값이 `undefined`인 프로퍼티를 버린다 → `{q:'', pageSize: undefined}`와 `{q:''}`는 동일 해시. 필드를 제거하는 정규화가 필요 없다 |
-| `category` | `parseAsStringLiteral(CATEGORY_IDS).withDefault('all')`이 허용값 외 입력을 기본값으로 되돌린다 → 표현 변형이 parser 밖으로 새어나가지 않는다. 값 생략과 `?category=all`도 동일하게 `'all'` |
-| `sort` | 위와 동일(`parseAsStringLiteral(SORTS).withDefault('latest')`). 발제가 기본 정렬도 `sort=latest`를 명시해 보내도록 요구하므로, 서버의 "sort 생략 시 fixture 순서 유지" 경로는 애초에 타지 않는다 |
+| 대상                        | 불필요한 이유                                                                                                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 객체 필드 순서              | `hashKey`가 `Object.keys(val).sort()`로 정렬한 뒤 직렬화한다(`@tanstack/query-core@5.101.2`, `build/modern/utils.js:85-93`) → `{q, category}`와 `{category, q}`는 동일 해시                      |
+| optional 필드의 `undefined` | `JSON.stringify`가 값이 `undefined`인 프로퍼티를 버린다 → `{q:'', pageSize: undefined}`와 `{q:''}`는 동일 해시. 필드를 제거하는 정규화가 필요 없다                                               |
+| `category`                  | `parseAsStringLiteral(CATEGORY_IDS).withDefault('all')`이 허용값 외 입력을 기본값으로 되돌린다 → 표현 변형이 parser 밖으로 새어나가지 않는다. 값 생략과 `?category=all`도 동일하게 `'all'`       |
+| `sort`                      | 위와 동일(`parseAsStringLiteral(SORTS).withDefault('latest')`). 발제가 기본 정렬도 `sort=latest`를 명시해 보내도록 요구하므로, 서버의 "sort 생략 시 fixture 순서 유지" 경로는 애초에 타지 않는다 |
 
 즉 **"객체 + 정규화" 중 객체 부분은 그 자체로 안전**하며, 정규화는 전 필드 일괄 적용이 아니라 아래 두 필드에만 필요하다.
 
@@ -127,7 +132,7 @@ const q = params.get('q')?.trim().toLocaleLowerCase('ko') ?? '';
 - `page` 보정: 400을 유발하는 값이 애초에 요청과 key에 도달하지 않음
 - `category`·`sort`·필드 순서·`undefined`: parser와 `hashKey`가 이미 보장하므로 **추가 정규화 코드를 만들지 않는다** (필요 없으면 굳이 추가하지 않는다는 위 결정에 부합)
 
-"필터링 히스토리를 뒤로/앞으로 이동으로 재적용할 때 새로 로드하지 않고 이미 받아온 데이터를 보여준다"는 요구는 **정규화된 안정적 key + 목록 staleTime 5m**의 조합으로 충족된다. 같은 조건으로 돌아오면 동일 key가 재현되고 fresh 상태이므로 재요청도 로딩 상태 노출도 없다.
+"필터링 히스토리를 뒤로/앞으로 이동으로 재적용할 때 새로 로드하지 않고 이미 받아온 데이터를 보여준다"는 요구는 **정규화된 안정적 key + 목록 staleTime(전역 20s 상속)**의 조합으로 충족된다. 같은 조건으로 돌아오면 동일 key가 재현되고, 20s 안이면 fresh 상태라 재요청도 로딩 상태 노출도 없다.
 
 #### 정규화 설계
 
@@ -137,18 +142,13 @@ URL 값 자체는 건드리지 않고, **URL → 요청 파라미터 변환 지�
 // 상품 도메인의 순수 함수
 export const PRODUCT_PAGE_SIZE = 12;
 
-export function toProductListQuery(filters: {
-  q: string;
-  category: CategoryId | 'all';
-  sort: ProductSort;
-  page: number;
-}): ProductListQuery {
+export function toProductListQuery(filters: { q: string; category: CategoryId | 'all'; sort: ProductSort; page: number }): ProductListQuery {
   return {
     q: filters.q.trim().toLocaleLowerCase('ko'), // 서버와 동일 규칙. 내부 공백은 유지
     category: filters.category, // parser가 보장 — 추가 처리 없음
     sort: filters.sort, // parser가 보장 — 추가 처리 없음
     page: Math.max(1, filters.page),
-    pageSize: PRODUCT_PAGE_SIZE,
+    pageSize: PRODUCT_PAGE_SIZE
   };
 }
 ```
@@ -163,15 +163,16 @@ const productQueries = {
     return queryOptions({
       queryKey: [...productQueries.all(), 'list', query],
       queryFn: () => getProductList(query),
-      staleTime: 5 * 60 * 1000,
+      staleTime: 5 * 60 * 1000
     });
-  },
+  }
 };
 ```
 
 검증용으로 순수 함수 테스트 1개를 남긴다 — 공백·대소문자 변형이 같은 결과로 수렴하는지, 내부 공백은 보존되는지, `page=0`이 `1`로 보정되는지.
 
 ### retry 정책
+
 - 결정: 기본 `retry`(3회, exponential backoff) 대신, 에러 유형에 따라 재시도 여부를 분기하는 함수를 `productQueries.list`에 설정한다. `ApiError.status`가 500 이상(일시적 서버 오류로 간주)일 때만 재시도하고, 4xx(요청 자체가 잘못됨)는 즉시 실패 처리한다.
 - 근거:
   - TanStack Query 기본값은 실패 원인을 구분하지 않고 3회 재시도한다(공식 문서 `important-defaults.md`: "Queries that fail are silently retried 3 times with exponential backoff delay before capturing and displaying an error to the UI"). `page` 음수처럼 서버 검증에서 걸려 400이 되는 요청은 재시도해도 같은 응답이 반복될 뿐이라, exponential backoff만큼 사용자가 무의미하게 기다리게 된다.
@@ -188,21 +189,22 @@ const productQueries = {
       queryKey: [...productQueries.all(), 'list', query],
       queryFn: () => getProductList(query),
       staleTime: 5 * 60 * 1000,
-      retry: (failureCount, error) =>
-        failureCount < 3 && !(error instanceof ApiError && error.status < 500),
+      retry: (failureCount, error) => failureCount < 3 && !(error instanceof ApiError && error.status < 500)
     });
-  },
+  }
 };
 ```
 
 ## 3. API 함수 계층
 
 ### API 함수·queryOptions 팩토리의 위치
+
 - 결정: `src/app/api/{domain}/` 아래, 관련 도메인 디렉토리 하위에 둔다 (예: `src/app/api/products/`).
 - 근거: 컴포넌트 로직을 포함하지 않는 API의 쿼리 정의이므로, 컴포넌트 트리가 아니라 API 계층에 귀속된다.
 - 주의: `src/app/api/{domain}/`는 Next.js App Router가 `route.ts`를 Route Handler(서버)로 특별 취급하는 예약 디렉토리다. `route.ts`가 아닌 파일은 라우팅에서 무시되므로 같은 폴더에 클라이언트용 `queryOptions` 팩토리를 둬도 라우팅 동작은 깨지지 않지만, 서버 핸들러 코드와 클라이언트 쿼리 정의가 같은 폴더 트리에 공존하게 된다. 이 트레이드오프를 인지한 채로 내린 결정.
 
 ### 공통 fetch wrapper
+
 - 결정: 도메인 API 함수가 공유하는 fetch wrapper 하나를 둔다. 응답이 2XX가 아니면 에러로 처리하고, 상태 코드와 메시지를 담은 커스텀 에러 클래스(`ApiError`)를 throw한다. wrapper는 도메인 폴더가 아니라 API 계층 직속 하위(`src/app/api/apiFetch.ts`)에 둔다.
 - 근거:
   - `fetch`는 400·500을 받아도 reject하지 않고 정상 resolve한다(네트워크 자체가 끊기는 경우만 reject) → `!res.ok`를 명시적으로 확인해 throw하지 않으면 에러 응답 바디가 정상 데이터인 것처럼 통과해 `isError`가 true로 바뀌지 않고, `state-design.md` 6번 항목에서 결정한 "에러는 ErrorBoundary가 처리"가 성립하지 않는다.
@@ -216,7 +218,7 @@ const productQueries = {
 export class ApiError extends Error {
   constructor(
     readonly status: number,
-    message: string,
+    message: string
   ) {
     super(message);
     this.name = 'ApiError';
@@ -250,6 +252,7 @@ function getProductList(query: ProductListQuery): Promise<ProductListResponse> {
 ## 4. 로딩·에러 처리 — 상품 목록
 
 ### 로딩: `useSuspenseQuery` + `startTransition`
+
 - 결정: `useQuery` + `placeholderData: keepPreviousData` 대신, `useSuspenseQuery` + `startTransition` 조합을 채택한다.
 - 근거:
   - 초기 진입 로딩은 Suspense 경계의 스켈레톤으로 선언적으로 처리한다 — 컴포넌트가 `isPending`을 직접 분기하지 않는다.
@@ -277,10 +280,12 @@ function ProductListSection({ filters }: { filters: ProductListFilters }) {
 ```
 
 ### 페이지네이션: `useInfiniteQuery` 의도적 배제
+
 - 결정: 무한 스크롤(`useInfiniteQuery`) 대신 offset 기반 페이지네이션(`page`/`pageSize`)을 유지한다.
 - 근거: `week-05-quests.md` 1단계 API 계약이 `page`(1부터 시작)/`pageSize`만 정의하고, 과제 어디에도 무한 스크롤 요구가 없다. "이전 목록 유지"는 페이지네이션 컨트롤 + `startTransition` 조합만으로 충족되므로 무한 스크롤 전용 훅을 도입할 이유가 없다.
 
 ### Suspense 경계 범위: 서브트리 전체 fallback 허용
+
 - 결정: 필터 바 + 상품 그리드 + 페이지네이션을 하나의 Suspense 경계로 묶는다. 이 서브트리 내부에 별도의 부분 로딩 영역을 두지 않는다.
 - 근거:
   - `week-05-quests.md` 완료조건은 "요청 중·요청 실패·검색 결과 없음이 같은 화면으로 처리되지 않는다"만 요구할 뿐, 목록 섹션 내부의 부분 로딩(예: 필터 UI는 그대로 두고 그리드만 스켈레톤)까지는 요구하지 않는다.
@@ -289,6 +294,7 @@ function ProductListSection({ filters }: { filters: ProductListFilters }) {
 - 경계 밖: 네비게이션 바. 필터/페이지 전환 중에도 사용자가 다른 화면으로 이동할 수 있어야 하므로, Suspense 경계는 목록 섹션에만 두고 네비게이션 바는 상위 레이아웃에 남긴다.
 
 ### 에러 처리 구조: `react-error-boundary` + `QueryErrorResetBoundary`
+
 - 결정: `react-error-boundary`(신규 의존성 — 아래 고지 참조)를 도입한다. `QueryErrorResetBoundary`로 목록 섹션을 감싸고, `onReset` prop에 `reset`을 연결한다 — `resetErrorBoundary()`가 호출되면 쿼리 캐시의 에러 상태 초기화와 React 트리 재마운트가 함께 일어난다.
 - 범위 변경 고지: `state-design.md` §6은 재시도(refetch) UI를 "Basic 범위 밖(Advanced C)"으로 규정했었다. 이번 결정으로 Basic 설계에 재시도 배선을 포함시킨다 — 에러 fallback이 메시지만 있는 막다른 화면이 아니라 즉시 재요청 가능한 화면이어야 한다는 판단. `state-design.md` §6도 함께 갱신했다(아래 참조).
 - 에러 전파 범위: `useSuspenseQuery`는 `throwOnError` 옵션을 지원하지 않는다(TanStack Query 공식 문서 — `useSuspenseQuery`는 `throwOnError`·`enabled`·`placeholderData`를 옵션에서 제외한다). 대신 기본 동작을 그대로 쓴다 — 기본 `throwOnError`는 `query.state.data === undefined`일 때만 throw하므로, **신규 페이지/필터(캐시에 없던 key)의 실패는 자동으로 ErrorBoundary까지 전파**되고, **이미 캐시된 페이지의 백그라운드 재검증 실패는 조용히 무시되며 이전 데이터가 그대로 유지**된다. 후자까지 항상 fallback으로 전환하려면 `if (error && !isFetching) throw error` 형태의 수동 오버라이드가 필요하지만, 이번 설계에서는 채택하지 않는다 — 사용자가 "신규 페이지/필터만"을 기본 범위로 확정했다.
@@ -322,6 +328,7 @@ function ProductListPage() {
 - 신규 의존성 고지: `react-error-boundary`는 현재 `package.json`에 없다. CLAUDE.md "의존성은 임의로 추가/업그레이드하지 않는다. 필요 시 먼저 제안한다" 규칙에 따라, 이 문서의 결정이 곧 그 제안이다 — 실제 설치는 구현 단계에서 진행한다.
 
 ### CLAUDE.md 보완 — 클래스 컴포넌트 금지 예외
+
 - 결정: `### 컴포넌트 구조`의 "클래스 컴포넌트 금지" 항목에 에러 바운더리 예외를 명시했다(CLAUDE.md 직접 수정).
 - 근거: React 공식 문서(react.dev/reference/react/Component)는 "`static getDerivedStateFromError`에는 함수 컴포넌트용 직접적인 대응 API가 아직 없다"고 명시한다. `react-error-boundary`의 `ErrorBoundary`도 내부적으로 이 제약 때문에 클래스 컴포넌트로 구현돼 있다 — 회피 불가능한 구조적 제약이므로, 기존 "클래스 컴포넌트 금지"와 "에러는 ErrorBoundary로 처리한다"(같은 문서 47번째 줄) 사이의 문자적 충돌을 예외 조항으로 해소한다.
 

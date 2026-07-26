@@ -18,7 +18,6 @@ export const productQueries = {
     return queryOptions({
       queryKey: [...productQueries.all(), 'list', query],
       queryFn: () => getProductList(query),
-      staleTime: 5 * 60 * 1000,
       retry: (failureCount, error) => failureCount < 3 && !(error instanceof ApiError && error.status < 500)
     });
   }
