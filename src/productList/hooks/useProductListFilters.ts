@@ -14,6 +14,7 @@ type UseProductListFiltersResult = {
   setSort: (value: ProductSort) => void;
   setPage: (value: number) => void;
   correctPage: (value: number) => void;
+  resetFilters: () => void;
 };
 
 export function useProductListFilters(): UseProductListFiltersResult {
@@ -25,6 +26,8 @@ export function useProductListFilters(): UseProductListFiltersResult {
   const setSort = useCallback((value: ProductSort) => void setFilters({ sort: value, page: FIRST_PAGE }), [setFilters]);
   const setPage = useCallback((value: number) => void setFilters({ page: value }), [setFilters]);
   const correctPage = useCallback((value: number) => void setFilters({ page: value }, { history: 'replace' }), [setFilters]);
+  // AI 생성: 4xx 에러의 복구 행동. null을 넘기면 nuqs가 모든 키를 parser 기본값으로 되돌린다(전체 초기화이므로 push).
+  const resetFilters = useCallback(() => void setFilters(null), [setFilters]);
 
-  return { filters, setQuery, setCategory, setSort, setPage, correctPage };
+  return { filters, setQuery, setCategory, setSort, setPage, correctPage, resetFilters };
 }

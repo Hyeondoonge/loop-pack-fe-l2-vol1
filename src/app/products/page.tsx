@@ -1,5 +1,3 @@
-import { Suspense } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
 import { createLoader } from 'nuqs/server';
 import ProductListSection from '@/productList/ProductListSection';
@@ -12,7 +10,8 @@ import { productListParsers } from '@/productList/productListFilters';
 const loadProductListFilters = createLoader(productListParsers);
 
 // AI 생성: 이 Next.js 버전에서 searchParams는 Promise다. 위 loader로 파싱해 URL 필터에 맞는 목록을
-// 서버에서 미리 채운 뒤 dehydrate하여 클라이언트로 넘긴다.
+// 서버에서 미리 채운 뒤 dehydrate하여 클라이언트로 넘긴다. 로딩·에러는 ProductListSection이 결과
+// 영역 단위로 처리하므로(필터 컨트롤은 항상 렌더) 여기서는 Suspense·ErrorBoundary 경계를 두지 않는다.
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const filters = await loadProductListFilters(searchParams);
 
@@ -20,26 +19,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   await queryClient.prefetchQuery(productQueries.list(filters));
 
   return (
-    // AI 생성: 로딩·에러 폴백 문구. 빈 결과 화면과 눈으로 구분되도록 서로 다른 문구를 쓴다.
-    <ErrorBoundary
-      fallback={
-        <main>
-          <p>상품 목록을 불러오지 못했습니다.</p>
-          <p>잠시 후 다시 시도해 주세요.</p>
-        </main>
-      }
-    >
-      <Suspense
-        fallback={
-          <main>
-            <p>상품 목록을 불러오는 중입니다...</p>
-          </main>
-        }
-      >
-        <HydrationBoundary state={dehydrate(queryClient)}>
-          <ProductListSection />
-        </HydrationBoundary>
-      </Suspense>
-    </ErrorBoundary>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ProductListSection />
+    </HydrationBoundary>
   );
 }

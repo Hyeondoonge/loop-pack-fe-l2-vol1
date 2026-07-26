@@ -2,12 +2,13 @@
 
 import { useEffect } from 'react';
 import Image from 'next/image';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import SearchInput from '@/productList/SearchInput';
 import { useProductListFilters } from '@/productList/hooks/useProductListFilters';
 import { CATEGORY_OPTIONS, SORT_OPTIONS } from '@/productList/productListConstants';
 import { resolvePageOverflow } from '@/productList/resolvePageOverflow';
 import { productQueries } from '@/app/api/products/productQueries';
+import { ApiError } from '@/app/api/apiFetch';
 import { formatPrice } from '@/lib/formatPrice';
 import ProductActions from '@/components/commerce/ProductActions/ProductActions';
 import type { CategoryId, Product, ProductSort } from '@/types/commerce';
@@ -36,6 +37,41 @@ function isCategoryOption(value: string): value is CategoryId | 'all' {
 // AI 생성: 위와 같은 이유로 정렬 값도 타입 가드로 좁힌다.
 function isSortOption(value: string): value is ProductSort {
   return SORT_OPTIONS.some((option) => option === value);
+}
+
+interface ProductResultsErrorProps {
+  error: unknown;
+  isFetching: boolean;
+  onRetry: () => void;
+  onResetFilters: () => void;
+}
+
+// AI 생성: 서버 상태 코드로 두 갈래를 가른다. 4xx는 재요청해도 같은 실패가 반복되므로
+// 재시도 버튼 대신 필터를 기본값으로 되돌리는 복구 행동을 준다. 5xx·네트워크 예외는
+// 일시 장애로 보고 재시도 버튼을 준다.
+function ProductResultsError({ error, isFetching, onRetry, onResetFilters }: ProductResultsErrorProps) {
+  const isClientError = error instanceof ApiError && error.status < 500;
+  const message = error instanceof ApiError ? error.message : '상품 목록을 불러오지 못했습니다.';
+
+  if (isClientError) {
+    return (
+      <div>
+        <p>{message}</p>
+        <button type="button" onClick={onResetFilters}>
+          필터 초기화
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p>{message}</p>
+      <button type="button" disabled={isFetching} onClick={onRetry}>
+        다시 시도
+      </button>
+    </div>
+  );
 }
 
 function ProductResults({ products, page, totalPages, onPageChange }: ProductResultsProps) {
@@ -78,16 +114,22 @@ function ProductResults({ products, page, totalPages, onPageChange }: ProductRes
 }
 
 export default function ProductListSection() {
-  const { filters, setQuery, setCategory, setSort, setPage, correctPage } = useProductListFilters();
+  const { filters, setQuery, setCategory, setSort, setPage, correctPage, resetFilters } = useProductListFilters();
+
   // AI 생성: ESLint id-denylist 규칙이 식별자 data를 금지해서 productList로 이름을 바꿔 구조분해한다.
-  const { data: productList } = useSuspenseQuery(productQueries.list(filters));
+  // isPending: 이 필터 조합의 캐시가 아직 한 번도 없음(첫 로딩). isPlaceholderData: keepPreviousData로
+  // 이전 필터의 결과를 보여주는 중(전환 중) — 에러는 Suspense 밖 useQuery라 여기서 값으로 받는다.
+  const { data: productList, isPending, isPlaceholderData, isError, error, isFetching, refetch } = useQuery(productQueries.list(filters));
 
   // 페이지 초과 보정: 외부 시스템(브라우저 히스토리 = URL)에 쓰는 동기화이므로 useEffect가 맞다.
   // 파생값을 state로 복사하는 용도가 아니어서 프로젝트의 effect 금지 규칙에 해당하지 않는다.
+  // AI 생성: isPlaceholderData 중엔 productList가 "이전 필터"의 응답이라 그 totalCount로 최신 filters.page를
+  // 판단하면 안 된다(아직 도착하지 않은 페이지를 옛 응답 기준으로 잘못 교정). 에러·첫 로딩(productList 없음)도 건너뛴다.
   useEffect(() => {
+    if (!productList || isPlaceholderData) return;
     const corrected = resolvePageOverflow(filters.page, productList.totalCount, productList.pageSize);
     if (corrected !== null) correctPage(corrected);
-  }, [filters.page, productList.totalCount, productList.pageSize, correctPage]);
+  }, [filters.page, productList, isPlaceholderData, correctPage]);
 
   function handleCategoryChange(value: string) {
     if (isCategoryOption(value)) setCategory(value);
@@ -97,7 +139,7 @@ export default function ProductListSection() {
     if (isSortOption(value)) setSort(value);
   }
 
-  const totalPages = Math.ceil(productList.totalCount / productList.pageSize);
+  const totalPages = productList ? Math.ceil(productList.totalCount / productList.pageSize) : 0;
 
   return (
     <main className="week05-page">
@@ -107,10 +149,12 @@ export default function ProductListSection() {
           <SearchInput key={filters.q} defaultValue={filters.q} onSubmit={setQuery} />
           <label>
             카테고리
-            <select name="category" value={filters.category} onChange={(event) => handleCategoryChange(event.target.value)}>
+            {/* AI 생성: 결과 쿼리 실패·첫 로딩 시 productList.categories가 없다. 필터 영역은 항상 렌더해야
+            하므로(에러여도 사용자가 갇히지 않게) 이때는 '전체' 하나만 두고 select를 비활성화한다. */}
+            <select name="category" value={filters.category} disabled={!productList} onChange={(event) => handleCategoryChange(event.target.value)}>
               {/* AI 생성: client-state-design.md 12번 — 'all'은 서버 categories에 없는 필터 개념이라 client가 붙이는 합성 옵션. 나머지 라벨은 서버 응답(productList.categories)에서 그린다. */}
               <option value="all">전체</option>
-              {productList.categories.map((category) => (
+              {productList?.categories.map((category) => (
                 <option value={category.id} key={category.id}>
                   {category.name}
                 </option>
@@ -129,9 +173,17 @@ export default function ProductListSection() {
           </label>
         </div>
       </section>
-      <section className="week05-section" aria-label="상품 검색 결과">
-        <p>총 {productList.totalCount}개</p>
-        <ProductResults products={productList.products} page={filters.page} totalPages={totalPages} onPageChange={setPage} />
+      <section className="week05-section" aria-label="상품 검색 결과" aria-busy={isPlaceholderData}>
+        {isError ? (
+          <ProductResultsError error={error} isFetching={isFetching} onRetry={() => void refetch()} onResetFilters={resetFilters} />
+        ) : isPending ? (
+          <p>상품 목록을 불러오는 중입니다...</p>
+        ) : (
+          <>
+            <p>총 {productList.totalCount}개</p>
+            <ProductResults products={productList.products} page={filters.page} totalPages={totalPages} onPageChange={setPage} />
+          </>
+        )}
       </section>
     </main>
   );
