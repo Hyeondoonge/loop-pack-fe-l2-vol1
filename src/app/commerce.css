@@ -1,0 +1,156 @@
+/* 공통 레이아웃 */
+.page-container {
+  width: min(100% - 32px, 1200px);
+  margin: 0 auto;
+  padding: 24px 0 64px;
+}
+
+.site-header-inner,
+.site-header-inner nav,
+.category-links,
+.product-filters,
+.pagination,
+.product-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.content-section {
+  margin-top: 40px;
+}
+
+.content-section > h1,
+.content-section > h2 {
+  margin-bottom: 16px;
+}
+
+.page-container a:focus-visible,
+.page-container button:focus-visible,
+.page-container input:focus-visible,
+.page-container select:focus-visible {
+  outline: 3px solid #2557a7;
+  outline-offset: 3px;
+}
+
+/* 헤더 */
+.site-header-inner {
+  justify-content: space-between;
+  padding-bottom: 24px;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: 100%;
+  padding-top: 24px;
+  background: #fff;
+}
+
+.site-header > .site-header-inner {
+  width: min(100% - 32px, 1200px);
+  margin: 0 auto;
+}
+
+@media (max-width: 480px) {
+  .site-header-inner {
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .site-header-inner nav {
+    width: 100%;
+  }
+}
+
+/* 홈 히어로 */
+.home-hero {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 32px;
+  background: #ececec;
+}
+
+@media (max-width: 480px) {
+  .home-hero {
+    min-height: 180px;
+    padding: 24px;
+  }
+}
+
+/* 상품 카드·그리드 */
+.category-links a,
+.product-card button,
+.pagination button {
+  padding: 8px 12px;
+  border: 1px solid #c8c8c8;
+  background: transparent;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.product-card {
+  display: grid;
+  gap: 8px;
+}
+
+.product-card-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  background: #ececec;
+  object-fit: cover;
+}
+
+@media (max-width: 960px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .product-grid {
+    gap: 24px 12px;
+  }
+}
+
+/* 목록 필터·페이지네이션 */
+.product-filters label {
+  display: grid;
+  gap: 6px;
+}
+
+.product-filters input,
+.product-filters select {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #c8c8c8;
+  background: transparent;
+  color: inherit;
+}
+
+.pagination {
+  justify-content: center;
+  margin-top: 32px;
+}
+
+@media (max-width: 720px) {
+  .product-filters label {
+    flex: 1 1 100%;
+  }
+}

@@ -12,7 +12,6 @@ import { ApiError } from '@/app/api/apiFetch';
 import { formatPrice } from '@/lib/formatPrice';
 import ProductActions from '@/components/commerce/ProductActions/ProductActions';
 import type { CategoryId, Product, ProductSort } from '@/types/commerce';
-import '@/examples/week-05-layout/week-05-layout.css';
 
 interface ProductResultsProps {
   products: Product[];
@@ -87,10 +86,10 @@ function ProductResults({ products, page, totalPages, onPageChange }: ProductRes
 
   return (
     <>
-      <div className="week05-grid">
+      <div className="product-grid">
         {products.map((product) => (
-          <article className="week05-product" key={product.id}>
-            <Image className="week05-image" src={product.image} alt={product.name} width={400} height={400} />
+          <article className="product-card" key={product.id}>
+            <Image className="product-card-image" src={product.image} alt={product.name} width={400} height={400} />
             <p>{product.brand}</p>
             <h2>{product.name}</h2>
             <strong>{formatPrice(product.price)}</strong>
@@ -98,7 +97,7 @@ function ProductResults({ products, page, totalPages, onPageChange }: ProductRes
           </article>
         ))}
       </div>
-      <nav className="week05-pagination" aria-label="페이지 이동">
+      <nav className="pagination" aria-label="페이지 이동">
         <button type="button" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
           이전
         </button>
@@ -142,10 +141,10 @@ export default function ProductListSection() {
   const totalPages = productList ? Math.ceil(productList.totalCount / productList.pageSize) : 0;
 
   return (
-    <main className="week05-page">
-      <section className="week05-section">
+    <main className="page-container">
+      <section className="content-section">
         <h1>상품 목록</h1>
-        <div className="week05-filters">
+        <div className="product-filters">
           <SearchInput key={filters.q} defaultValue={filters.q} onSubmit={setQuery} />
           <label>
             카테고리
@@ -173,7 +172,7 @@ export default function ProductListSection() {
           </label>
         </div>
       </section>
-      <section className="week05-section" aria-label="상품 검색 결과" aria-busy={isPlaceholderData}>
+      <section className="content-section" aria-label="상품 검색 결과" aria-busy={isPlaceholderData}>
         {isError ? (
           <ProductResultsError error={error} isFetching={isFetching} onRetry={() => void refetch()} onResetFilters={resetFilters} />
         ) : isPending ? (

@@ -18,7 +18,7 @@ export default function ProductActions({ productId, productLabel }: ProductActio
   const toggleCart = useCartStore((state) => state.toggle);
 
   return (
-    <div>
+    <div className="product-card-actions">
       <button type="button" aria-label={`${productLabel} 위시리스트`} aria-pressed={isInWishlist} onClick={() => toggleWishlist(productId)}>
         찜
       </button>
