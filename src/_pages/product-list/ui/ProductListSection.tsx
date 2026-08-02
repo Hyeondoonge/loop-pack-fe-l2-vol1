@@ -9,7 +9,7 @@ import { CATEGORY_OPTIONS, SORT_OPTIONS } from '../model/productListConstants';
 import { resolvePageOverflow } from '../lib/resolvePageOverflow';
 import { productQueries } from '../api/productQueries';
 import { ApiError } from '@/shared/api/apiFetch';
-import { formatPrice } from '@/lib/formatPrice';
+import { formatPrice } from '@/shared/lib/formatPrice';
 import ProductActions from '@/components/commerce/ProductActions/ProductActions';
 import type { CategoryId, Product, ProductSort } from '@/types/commerce';
 
