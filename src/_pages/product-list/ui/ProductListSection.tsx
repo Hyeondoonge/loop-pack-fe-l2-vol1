@@ -8,8 +8,8 @@ import { CATEGORY_OPTIONS, SORT_OPTIONS } from '../model/productListConstants';
 import { resolvePageOverflow } from '../lib/resolvePageOverflow';
 import { productQueries } from '../api/productQueries';
 import { ApiError } from '@/shared/api/apiFetch';
-import ProductCardWithActions from '@/widgets/product-card/ui/ProductCardWithActions';
-import type { CategoryId, Product, ProductSort } from '@/entities/product/model/types';
+import { ProductCardWithActions } from '@/widgets/product-card';
+import type { CategoryId, Product, ProductSort } from '@/entities/product';
 
 interface ProductResultsProps {
   products: Product[];

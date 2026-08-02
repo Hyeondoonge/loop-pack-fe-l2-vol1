@@ -2,7 +2,7 @@ import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { ApiError } from '@/shared/api/apiFetch';
 import { getProductList } from './getProductList';
 import { toProductListQuery } from './toProductListQuery';
-import type { CategoryId, ProductSort } from '@/entities/product/model/types';
+import type { CategoryId, ProductSort } from '@/entities/product';
 
 export type ProductListFilters = {
   q: string;

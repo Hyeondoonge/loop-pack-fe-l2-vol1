@@ -1,6 +1,6 @@
 'use client';
 
-import { useCartStore } from '@/entities/cart/model/cartStore';
+import { useCartStore } from '@/entities/cart';
 
 interface CartToggleButtonProps {
   productId: string;

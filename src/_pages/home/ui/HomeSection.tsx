@@ -5,8 +5,8 @@
 import Link from 'next/link';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { homeQueries } from '@/_pages/home/api/homeQueries';
-import ProductCardWithActions from '@/widgets/product-card/ui/ProductCardWithActions';
-import type { Product } from '@/entities/product/model/types';
+import { ProductCardWithActions } from '@/widgets/product-card';
+import type { Product } from '@/entities/product';
 
 interface ProductGridSectionProps {
   title: string;

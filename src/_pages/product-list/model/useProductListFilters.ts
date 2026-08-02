@@ -5,7 +5,7 @@ import { useQueryStates } from 'nuqs';
 import { productListParsers } from './productListFilters';
 import { FIRST_PAGE } from './productListConstants';
 import type { ProductListFilters } from '@/_pages/product-list/api/productQueries';
-import type { CategoryId, ProductSort } from '@/entities/product/model/types';
+import type { CategoryId, ProductSort } from '@/entities/product';
 
 type UseProductListFiltersResult = {
   filters: ProductListFilters;

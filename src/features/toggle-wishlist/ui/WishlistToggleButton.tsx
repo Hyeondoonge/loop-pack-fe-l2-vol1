@@ -1,6 +1,6 @@
 'use client';
 
-import { useWishlistStore } from '@/entities/wishlist/model/wishlistStore';
+import { useWishlistStore } from '@/entities/wishlist';
 
 interface WishlistToggleButtonProps {
   productId: string;

@@ -1,7 +1,6 @@
-import ProductCard from '@/entities/product/ui/ProductCard';
-import WishlistToggleButton from '@/features/toggle-wishlist/ui/WishlistToggleButton';
-import CartToggleButton from '@/features/toggle-cart/ui/CartToggleButton';
-import type { Product } from '@/entities/product/model/types';
+import { ProductCard, type Product } from '@/entities/product';
+import { WishlistToggleButton } from '@/features/toggle-wishlist';
+import { CartToggleButton } from '@/features/toggle-cart';
 
 interface ProductCardWithActionsProps {
   product: Product;

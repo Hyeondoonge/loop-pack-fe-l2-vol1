@@ -3,7 +3,7 @@ import { categories, waitForMockApi } from '../_data/commerce';
 import { getProductListData } from './getProductListData';
 import type { MockApiScenario } from '../_data/commerce';
 import type { ApiErrorResponse } from '@/shared/api/apiFetch';
-import type { ProductListResponse, ProductSort } from '@/entities/product/model/types';
+import type { ProductListResponse, ProductSort } from '@/entities/product';
 
 const sortValues = ['latest', 'popular', 'price-asc', 'price-desc'] as const satisfies readonly ProductSort[];
 const scenarioValues = ['empty', 'error'] as const satisfies readonly MockApiScenario[];
