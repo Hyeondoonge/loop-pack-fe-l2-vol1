@@ -1,6 +1,8 @@
 // AI 생성
-import { apiFetch } from '@/app/api/apiFetch';
-import { getHomeData } from '@/app/api/home/getHomeData';
+import { apiFetch } from '@/shared/api/apiFetch';
+// AI 생성: mock 백엔드(루트 app/api)는 FSD 레이어 밖 외부 시스템 대역이라 @/* alias(=./src/*) 밖이다.
+// 상대 경로가 그대로 예외임을 드러내므로 편의를 위한 alias를 추가하지 않는다.
+import { getHomeData } from '../../../../app/api/home/getHomeData';
 import type { HomeResponse } from '@/types/commerce';
 
 // AI 생성: docs/work/week-05/ssr-fetch-fix-plan.md — 서버 렌더링 중에는 자기 Route Handler를

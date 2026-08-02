@@ -3,8 +3,8 @@
 // 버튼 묶음만 별도 컴포넌트로 뽑았다. F·6번 결정대로 prop은 productId만 받는다.
 'use client';
 
-import { useCartStore } from '@/app/store/cart/cartStore';
-import { useWishlistStore } from '@/app/store/wishlist/wishlistStore';
+import { useCartStore } from '@/entities/cart/model/cartStore';
+import { useWishlistStore } from '@/entities/wishlist/model/wishlistStore';
 
 interface ProductActionsProps {
   productId: string;

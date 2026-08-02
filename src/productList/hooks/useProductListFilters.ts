@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { useQueryStates } from 'nuqs';
 import { productListParsers } from '@/productList/productListFilters';
 import { FIRST_PAGE } from '@/productList/productListConstants';
-import type { ProductListFilters } from '@/app/api/products/productQueries';
+import type { ProductListFilters } from '@/_pages/product-list/api/productQueries';
 import type { CategoryId, ProductSort } from '@/types/commerce';
 
 type UseProductListFiltersResult = {

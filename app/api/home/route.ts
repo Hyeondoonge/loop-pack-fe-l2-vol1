@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { waitForMockApi } from '@/app/api/_data/commerce';
-import { getHomeData } from '@/app/api/home/getHomeData';
+import { waitForMockApi } from '../_data/commerce';
+import { getHomeData } from './getHomeData';
 import type { ApiErrorResponse, HomeResponse, MockApiScenario } from '@/types/commerce';
 
 const scenarioValues = ['empty', 'error'] as const satisfies readonly MockApiScenario[];

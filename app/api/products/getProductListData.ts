@@ -2,7 +2,7 @@
 // HTTP로 재호출하지 않고 이 함수를 직접 호출하기 위함(docs/work/week-05/ssr-fetch-fix-plan.md).
 // 입력값 검증(400)과 목업 지연(waitForMockApi)은 HTTP 경계인 route.ts 책임으로 남긴다.
 // q는 이미 정규화(trim + ko 소문자)된 값이 들어온다고 가정한다 — route.ts·toProductListQuery가 모두 선행 처리한다.
-import { categories, products } from '@/app/api/_data/commerce';
+import { categories, products } from '../_data/commerce';
 import type { MockApiScenario, ProductListResponse, ProductSort } from '@/types/commerce';
 
 type ProductListDataInput = {

@@ -1,7 +1,7 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
-import { ApiError } from '@/app/api/apiFetch';
-import { getProductList } from '@/app/api/products/getProductList';
-import { toProductListQuery } from '@/app/api/products/toProductListQuery';
+import { ApiError } from '@/shared/api/apiFetch';
+import { getProductList } from './getProductList';
+import { toProductListQuery } from './toProductListQuery';
 import type { CategoryId, ProductSort } from '@/types/commerce';
 
 export type ProductListFilters = {

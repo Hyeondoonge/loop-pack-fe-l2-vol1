@@ -1,8 +1,8 @@
 import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
 import { createLoader } from 'nuqs/server';
 import ProductListSection from '@/productList/ProductListSection';
-import { getQueryClient } from '@/app/getQueryClient';
-import { productQueries } from '@/app/api/products/productQueries';
+import { getQueryClient } from '@/shared/api/getQueryClient';
+import { productQueries } from '@/_pages/product-list/api/productQueries';
 import { productListParsers } from '@/productList/productListFilters';
 
 // AI 생성: 클라이언트 useProductListFilters와 동일한 productListParsers로 searchParams를 파싱해야

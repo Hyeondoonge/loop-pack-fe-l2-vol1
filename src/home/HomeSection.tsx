@@ -5,7 +5,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { homeQueries } from '@/app/api/home/homeQueries';
+import { homeQueries } from '@/_pages/home/api/homeQueries';
 import { formatPrice } from '@/lib/formatPrice';
 import ProductActions from '@/components/commerce/ProductActions/ProductActions';
 import type { Product } from '@/types/commerce';

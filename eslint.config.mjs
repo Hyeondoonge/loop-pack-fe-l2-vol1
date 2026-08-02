@@ -64,9 +64,9 @@ const eslintConfig = defineConfig([
     }
   },
   {
-    // 타입 정보가 필요한 룰은 src 범위로만 한정. projectService로 타입 정보 제공.
+    // 타입 정보가 필요한 룰은 src + 루트 app(Next 라우팅·mock 백엔드) 범위로 한정. projectService로 타입 정보 제공.
     // ponytail: projectService=true면 tsconfig include 밖 파일도 자동 처리 — 옛 tsconfig.app/node.json 분리 불필요
-    files: ['src/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}'],
     languageOptions: {
       parserOptions: {
         projectService: true,

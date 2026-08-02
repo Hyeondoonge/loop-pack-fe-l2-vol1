@@ -3,8 +3,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useCartStore } from '@/app/store/cart/cartStore';
-import { useWishlistStore } from '@/app/store/wishlist/wishlistStore';
+import { useCartStore } from '@/entities/cart/model/cartStore';
+import { useWishlistStore } from '@/entities/wishlist/model/wishlistStore';
 
 export default function Header() {
   const wishlistCount = useWishlistStore((state) => state.ids.size);
