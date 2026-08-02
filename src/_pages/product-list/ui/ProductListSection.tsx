@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import SearchInput from './SearchInput';
 import { useProductListFilters } from '../model/useProductListFilters';
@@ -9,8 +8,7 @@ import { CATEGORY_OPTIONS, SORT_OPTIONS } from '../model/productListConstants';
 import { resolvePageOverflow } from '../lib/resolvePageOverflow';
 import { productQueries } from '../api/productQueries';
 import { ApiError } from '@/shared/api/apiFetch';
-import { formatPrice } from '@/shared/lib/formatPrice';
-import ProductActions from '@/components/commerce/ProductActions/ProductActions';
+import ProductCardWithActions from '@/widgets/product-card/ui/ProductCardWithActions';
 import type { CategoryId, Product, ProductSort } from '@/entities/product/model/types';
 
 interface ProductResultsProps {
@@ -88,13 +86,7 @@ function ProductResults({ products, page, totalPages, onPageChange }: ProductRes
     <>
       <div className="product-grid">
         {products.map((product) => (
-          <article className="product-card" key={product.id}>
-            <Image className="product-card-image" src={product.image} alt={product.name} width={400} height={400} />
-            <p>{product.brand}</p>
-            <h2>{product.name}</h2>
-            <strong>{formatPrice(product.price)}</strong>
-            <ProductActions productId={product.id} productLabel={product.name} />
-          </article>
+          <ProductCardWithActions key={product.id} product={product} headingLevel="h2" />
         ))}
       </div>
       <nav className="pagination" aria-label="페이지 이동">

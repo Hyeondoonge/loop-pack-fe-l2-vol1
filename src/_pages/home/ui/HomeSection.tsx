@@ -2,12 +2,10 @@
 // (페이지/컴포넌트/API 분리 원칙). 레이아웃 클래스는 commerce.css를 공유한다.
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { homeQueries } from '@/_pages/home/api/homeQueries';
-import { formatPrice } from '@/shared/lib/formatPrice';
-import ProductActions from '@/components/commerce/ProductActions/ProductActions';
+import ProductCardWithActions from '@/widgets/product-card/ui/ProductCardWithActions';
 import type { Product } from '@/entities/product/model/types';
 
 interface ProductGridSectionProps {
@@ -31,13 +29,7 @@ function ProductGridSection({ title, products }: ProductGridSectionProps) {
       <h2>{title}</h2>
       <div className="product-grid">
         {products.map((product) => (
-          <article className="product-card" key={product.id}>
-            <Image className="product-card-image" src={product.image} alt={product.name} width={400} height={400} />
-            <p>{product.brand}</p>
-            <h3>{product.name}</h3>
-            <strong>{formatPrice(product.price)}</strong>
-            <ProductActions productId={product.id} productLabel={product.name} />
-          </article>
+          <ProductCardWithActions key={product.id} product={product} headingLevel="h3" />
         ))}
       </div>
     </section>
