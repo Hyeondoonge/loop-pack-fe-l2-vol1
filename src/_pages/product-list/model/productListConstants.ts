@@ -1,4 +1,4 @@
-import type { CategoryId, ProductSort } from '@/types/commerce';
+import type { CategoryId, ProductSort } from '@/entities/product/model/types';
 
 export const CATEGORY_OPTIONS = ['all', 'casual', 'fashion', 'goods', 'home', 'digital'] as const satisfies readonly (CategoryId | 'all')[];
 export const SORT_OPTIONS = ['latest', 'popular', 'price-asc', 'price-desc'] as const satisfies readonly ProductSort[];

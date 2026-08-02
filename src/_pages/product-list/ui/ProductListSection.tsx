@@ -11,7 +11,7 @@ import { productQueries } from '../api/productQueries';
 import { ApiError } from '@/shared/api/apiFetch';
 import { formatPrice } from '@/shared/lib/formatPrice';
 import ProductActions from '@/components/commerce/ProductActions/ProductActions';
-import type { CategoryId, Product, ProductSort } from '@/types/commerce';
+import type { CategoryId, Product, ProductSort } from '@/entities/product/model/types';
 
 interface ProductResultsProps {
   products: Product[];

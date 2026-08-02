@@ -1,5 +1,5 @@
 import { PRODUCT_PAGE_SIZE } from '../model/productListConstants';
-import type { CategoryId, ProductListQuery, ProductSort } from '@/types/commerce';
+import type { CategoryId, ProductListQuery, ProductSort } from '@/entities/product/model/types';
 
 export function toProductListQuery(filters: { q: string; category: CategoryId | 'all'; sort: ProductSort; page: number }): ProductListQuery {
   return {

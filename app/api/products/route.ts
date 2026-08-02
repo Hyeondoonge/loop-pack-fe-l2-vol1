@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { categories, waitForMockApi } from '../_data/commerce';
 import { getProductListData } from './getProductListData';
-import type { ApiErrorResponse, MockApiScenario, ProductListResponse, ProductSort } from '@/types/commerce';
+import type { MockApiScenario } from '../_data/commerce';
+import type { ApiErrorResponse } from '@/shared/api/apiFetch';
+import type { ProductListResponse, ProductSort } from '@/entities/product/model/types';
 
 const sortValues = ['latest', 'popular', 'price-asc', 'price-desc'] as const satisfies readonly ProductSort[];
 const scenarioValues = ['empty', 'error'] as const satisfies readonly MockApiScenario[];

@@ -1,5 +1,7 @@
 // AI 생성
-import type { ApiErrorResponse } from '@/types/commerce';
+export type ApiErrorResponse = {
+  message: string;
+};
 
 export class ApiError extends Error {
   constructor(

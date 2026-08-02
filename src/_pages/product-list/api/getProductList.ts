@@ -4,7 +4,7 @@ import { apiFetch } from '@/shared/api/apiFetch';
 // 상대 경로가 그대로 예외임을 드러내므로 편의를 위한 alias를 추가하지 않는다.
 import { getProductListData } from '../../../../app/api/products/getProductListData';
 import { PRODUCT_PAGE_SIZE } from '../model/productListConstants';
-import type { ProductListQuery, ProductListResponse } from '@/types/commerce';
+import type { ProductListQuery, ProductListResponse } from '@/entities/product/model/types';
 
 function toSearchParams(query: ProductListQuery): string {
   const params = new URLSearchParams();

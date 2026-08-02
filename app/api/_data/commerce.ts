@@ -1,4 +1,8 @@
-import type { Category, CategoryId, Product } from '@/types/commerce';
+import type { Category, CategoryId, Product } from '@/entities/product/model/types';
+
+// AI 생성: mock 백엔드 전용 제어값 — scenario 쿼리 파라미터로만 전달되며 사용자 URL 상태나
+// ProductListQuery에는 포함하지 않는다.
+export type MockApiScenario = 'empty' | 'error';
 
 export const categories: Category[] = [
   { id: 'casual', name: '캐주얼' },
