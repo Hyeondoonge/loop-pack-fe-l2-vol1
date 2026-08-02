@@ -1,5 +1,5 @@
 import ProductCard from '@/entities/product/ui/ProductCard';
-import ProductActions from '@/components/commerce/ProductActions/ProductActions';
+import ProductActions from './ProductActions';
 import type { Product } from '@/entities/product/model/types';
 
 interface ProductCardWithActionsProps {
