@@ -3,11 +3,11 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
-import SearchInput from '@/productList/SearchInput';
-import { useProductListFilters } from '@/productList/hooks/useProductListFilters';
-import { CATEGORY_OPTIONS, SORT_OPTIONS } from '@/productList/productListConstants';
-import { resolvePageOverflow } from '@/productList/resolvePageOverflow';
-import { productQueries } from '@/_pages/product-list/api/productQueries';
+import SearchInput from './SearchInput';
+import { useProductListFilters } from '../model/useProductListFilters';
+import { CATEGORY_OPTIONS, SORT_OPTIONS } from '../model/productListConstants';
+import { resolvePageOverflow } from '../lib/resolvePageOverflow';
+import { productQueries } from '../api/productQueries';
 import { ApiError } from '@/shared/api/apiFetch';
 import { formatPrice } from '@/lib/formatPrice';
 import ProductActions from '@/components/commerce/ProductActions/ProductActions';

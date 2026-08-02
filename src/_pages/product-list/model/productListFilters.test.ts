@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FIRST_PAGE } from '@/productList/productListConstants';
+import { FIRST_PAGE } from './productListConstants';
 import { productListParsers } from './productListFilters';
 
 describe('productListParsers.page', () => {

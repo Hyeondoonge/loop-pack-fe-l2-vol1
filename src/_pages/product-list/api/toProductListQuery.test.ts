@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PRODUCT_PAGE_SIZE } from '@/productList/productListConstants';
+import { PRODUCT_PAGE_SIZE } from '../model/productListConstants';
 import { toProductListQuery } from './toProductListQuery';
 
 describe('toProductListQuery', () => {

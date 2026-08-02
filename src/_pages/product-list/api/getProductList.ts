@@ -3,7 +3,7 @@ import { apiFetch } from '@/shared/api/apiFetch';
 // AI 생성: mock 백엔드(루트 app/api)는 FSD 레이어 밖 외부 시스템 대역이라 @/* alias(=./src/*) 밖이다.
 // 상대 경로가 그대로 예외임을 드러내므로 편의를 위한 alias를 추가하지 않는다.
 import { getProductListData } from '../../../../app/api/products/getProductListData';
-import { PRODUCT_PAGE_SIZE } from '@/productList/productListConstants';
+import { PRODUCT_PAGE_SIZE } from '../model/productListConstants';
 import type { ProductListQuery, ProductListResponse } from '@/types/commerce';
 
 function toSearchParams(query: ProductListQuery): string {
