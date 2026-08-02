@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Select, SelectRoot, SelectList, type ListSlotProps, type OptionSlotProps, type RootSlotProps, type TriggerSlotProps } from '@/components/ui/select';
+import { Select, SelectRoot, SelectList, type ListSlotProps, type OptionSlotProps, type RootSlotProps, type TriggerSlotProps } from '@/shared/ui/select';
 import styles from './ThumbnailSelect.module.css';
 
 export interface ThumbnailOption {
