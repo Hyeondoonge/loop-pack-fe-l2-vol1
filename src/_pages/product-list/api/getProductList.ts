@@ -19,7 +19,7 @@ function toSearchParams(query: ProductListQuery): string {
 // AI 생성: docs/work/week-05/ssr-fetch-fix-plan.md — 서버 렌더링 중에는 자기 Route Handler를
 // HTTP(상대경로)로 재호출하지 않고 조회 함수를 직접 호출한다. 클라이언트는 기존대로 상대경로 fetch.
 // query는 toProductListQuery에서 정규화(q trim/소문자, page clamp)를 거친 값이다.
-export function getProductList(query: ProductListQuery): Promise<ProductListResponse> {
+export function getProductList(query: ProductListQuery, signal?: AbortSignal): Promise<ProductListResponse> {
   if (typeof window === 'undefined') {
     return Promise.resolve(
       getProductListData({
@@ -31,5 +31,5 @@ export function getProductList(query: ProductListQuery): Promise<ProductListResp
       })
     );
   }
-  return apiFetch(`/api/products?${toSearchParams(query)}`);
+  return apiFetch(`/api/products?${toSearchParams(query)}`, { signal });
 }
