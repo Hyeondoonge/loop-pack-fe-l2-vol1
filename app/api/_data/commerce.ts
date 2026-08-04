@@ -2,7 +2,7 @@ import type { Category, CategoryId, Product } from '@/entities/product';
 
 // AI 생성: mock 백엔드 전용 제어값 — scenario 쿼리 파라미터로만 전달되며 사용자 URL 상태나
 // ProductListQuery에는 포함하지 않는다.
-export type MockApiScenario = 'empty' | 'error';
+export type MockApiScenario = 'empty' | 'error' | 'slow';
 
 export const categories: Category[] = [
   { id: 'casual', name: '캐주얼' },
@@ -355,9 +355,8 @@ const normalizeProduct = (seed: ProductSeed): Product => ({
 
 export const products = productSeeds.map(normalizeProduct);
 
-const mockDelayMs = process.env.NODE_ENV === 'test' ? 0 : 500;
-
-export const waitForMockApi = () =>
+export const waitForMockApi = (requestedDelayMs = 500) =>
   new Promise<void>((resolve) => {
-    setTimeout(resolve, mockDelayMs);
+    const delayMs = process.env.NODE_ENV === 'test' ? 0 : requestedDelayMs;
+    setTimeout(resolve, delayMs);
   });

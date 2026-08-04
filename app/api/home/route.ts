@@ -5,7 +5,7 @@ import type { MockApiScenario } from '../_data/commerce';
 import type { HomeResponse } from '@/_pages/home';
 import type { ApiErrorResponse } from '@/shared/api/apiFetch';
 
-const scenarioValues = ['empty', 'error'] as const satisfies readonly MockApiScenario[];
+const scenarioValues = ['empty', 'error', 'slow'] as const satisfies readonly MockApiScenario[];
 
 const isMockApiScenario = (value: string): value is MockApiScenario => scenarioValues.some((scenario) => scenario === value);
 
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<HomeRespon
     return NextResponse.json({ message: '요청 조건을 확인해주세요.' }, { status: 400 });
   }
 
-  await waitForMockApi();
+  await waitForMockApi(scenario === 'slow' ? 1_500 : 500);
 
   if (scenario === 'error') {
     return NextResponse.json({ message: '홈 데이터를 불러오지 못했습니다.' }, { status: 500 });
