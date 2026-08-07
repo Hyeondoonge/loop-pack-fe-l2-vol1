@@ -56,11 +56,11 @@ slow API의 1.5초 지연은 그대로 둔다.
 
 **폴백 교체와 별개로 남은 구간**: 필터를 바꿔 결과가 교체될 때는 shift가 남는다. 30건 → 6건은 0.416(목록이 실제로 줄어 불가피), 정렬만 바꿔 건수가 같은 6건 → 6건도 0.226(본문 높이 1704 → 1761)이다.
 
-**클램프 가설 검증 — 반려** (`measurements/list-cls-clamp/`)
+**클램프 가설 검증 — 반려**
 
 카드 제목이 2줄을 넘어 3줄이 되는 카드가 있어 카드 높이가 제각각(69~140px)이고, 그게 정렬 변경 시 레이아웃을 밀어 CLS를 만든다고 판단해 `.product-card h2, h3`에 `-webkit-line-clamp: 2`(제목 높이를 `min-height`가 아닌 `height`로 상한 고정)를 적용했다. 같은 6건→6건 정렬 변경 시나리오로 재측정한 결과:
 
-| | 클램프 전 (`before-result.json`) | 클램프 후 (`after-result.json`) |
+| | 클램프 전 | 클램프 후 |
 | --- | --- | --- |
 | 카드 제목 높이 | 69~140px(들쭉날쭉) | 56px(6장 전부 균일) |
 | 본문 높이(정렬 전→후) | 1703→1760 | 1617→1617(불변) |
@@ -68,7 +68,7 @@ slow API의 1.5초 지연은 그대로 둔다.
 
 카드 높이를 완전히 균일화했는데도 CLS가 클램프 전후로 조금도 안 변해 **가설이 틀렸음을 실측으로 확인했다.**
 
-`shift-source-diagnosis.json`으로 `LayoutShift.sources`를 직접 열어보니 원인은 카드 높이가 아니라 **같은 상품이 재정렬되며 `<article class="product-card">` DOM 노드 자체가 그리드 안에서 다른 칸으로 물리적으로 이동**하는 것이었다(예: x=800→68). React의 `key`로 재사용되는 노드가 자리를 옮기는 이동량 자체를 클램프는 줄이지 못해 애초에 무관한 대응이었다.
+`LayoutShift.sources`를 직접 열어 기록해보니 원인은 카드 높이가 아니라 **같은 상품이 재정렬되며 `<article class="product-card">` DOM 노드 자체가 그리드 안에서 다른 칸으로 물리적으로 이동**하는 것이었다(예: x=800→68). React의 `key`로 재사용되는 노드가 자리를 옮기는 이동량 자체를 클램프는 줄이지 못해 애초에 무관한 대응이었다.
 
 부수적으로 확인된 사실: CDP `Input` 도메인의 신뢰된(isTrusted) 클릭·키보드 이벤트로 재현해도 같은 CLS 값(0.21743931167879527)이 나왔다 — slow API의 1.5초 지연이 Layout Instability API의 500ms recent-input 유예 기간을 넘기기 때문에, 실제 사용자 조작이었어도 이 shift는 CLS에 그대로 집계된다.
 
@@ -81,7 +81,7 @@ slow API의 1.5초 지연은 그대로 둔다.
 | 항목 | 값 |
 | --- | --- |
 | SSR 문서 응답 5회 (`curl`, `time_starttransfer`) | 0.099 / 0.011 / 0.008 / 0.014 / 0.011 s (첫 회 콜드스타트 제외 4회 평균 0.011 s) — 기존 서술된 1.508~1.522 s → 0.007~0.010 s와 같은 자릿수로 일치 |
-| SSR 초기 HTML | `product-card-skeleton` 12개, `aria-busy="true"` 확인(`measurements/list-ssr-skeleton/ssr-initial-html.html`) — `PRODUCT_PAGE_SIZE=12`와 일치 |
+| SSR 초기 HTML | `curl`로 받은 초기 HTML에 `product-card-skeleton` 12개와 `aria-busy="true"`가 있는 것을 확인했다(응답 원본은 로컬 보관) — `PRODUCT_PAGE_SIZE=12`와 일치 |
 | 스켈레톤 → 실데이터 전환 (CDP, page load 시점 기준) | t=384ms: skeleton 12/card 0/aria-busy=true → t=1082ms: 동일 → t=2208ms: skeleton 0/card 12/aria-busy=false (각 시점 스크린샷 4장으로 확인, 이미지 원본은 로컬 보관) |
 | 레이아웃 일치 여부 (스크린샷 육안 대조) | 스켈레톤 5열 그리드와 실제 카드 5열 그리드의 카드 높이·시작 y좌표 동일. "총 30개" 문구가 스켈레톤이 있던 자리에 그대로 나타남 |
 

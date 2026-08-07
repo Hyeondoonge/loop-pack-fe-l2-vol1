@@ -10,7 +10,7 @@
 
 **홈 cold load**
 
-raw 값 출처: `measurements/before/run-1.json` ~ `run-5.json` (단위 ms, CLS는 무단위)
+Lighthouse CLI 5회 실행의 raw 값을 그대로 옮겨 적었다 (단위 ms, CLS는 무단위). 실행 원본(JSON·트레이스·filmstrip)은 용량 때문에 원격에 올리지 않고 로컬에만 보관한다.
 
 | 지표 | 1      | 2      | 3      | 4      | 5      | 중앙값     | 최소   | 최대   |
 | ---- | ------ | ------ | ------ | ------ | ------ | ---------- | ------ | ------ |
@@ -53,7 +53,7 @@ raw 값 출처: `measurements/before/run-1.json` ~ `run-5.json` (단위 ms, CLS�
 
 **같은 조건 5회 재측정 raw 값** (최종 비교 결과는 [pr-description.md](./pr-description.md) 참고)
 
-raw 값 출처: `measurements/after/run-1.json` ~ `run-5.json` (단위 ms, CLS는 무단위). SHA `e3fdf8e545f8c5bab28f45e431eea5c817188422`, `APP_ORIGIN=http://localhost:3000`, production build 검증(부모 프로세스 `pnpm start`, dev 마커 0건, BUILD_ID `6ttI44QsHBrLzK9Wsova7`) 확인함.
+Lighthouse CLI 5회 실행의 raw 값을 그대로 옮겨 적었다 (단위 ms, CLS는 무단위. 실행 원본은 로컬 보관). SHA `e3fdf8e545f8c5bab28f45e431eea5c817188422`, `APP_ORIGIN=http://localhost:3000`, production build 검증(부모 프로세스 `pnpm start`, dev 마커 0건, BUILD_ID `6ttI44QsHBrLzK9Wsova7`) 확인함.
 
 | 지표 | 1      | 2     | 3     | 4     | 5     | 중앙값     | 최소  | 최대   |
 | ---- | ------ | ----- | ----- | ----- | ----- | ---------- | ----- | ------ |
