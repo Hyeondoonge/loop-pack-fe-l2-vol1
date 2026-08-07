@@ -58,7 +58,7 @@ UA 분기가 없는 지금은 두 UA가 같은 경로로 처리되어 같은 값
 두 페이지의 비용 구조가 다르다.
 
 - **목록** — 셸이 6ms에 나간다. 본문을 클라이언트 `useQuery`가 소유해서 서버가 아무것도 기다리지 않기 때문이다. `generateMetadata`가 `productQueries.list`를 await하면 TTFB가 6ms → 약 1506ms로, **없던 1.5초를 새로 만든다.** 본문은 브라우저가 따로 fetch하므로 request 범위 fetch memoization의 수혜도 없다 — Route Handler 호출이 서버 1회 + 브라우저 1회로 실제로 늘어난다.
-- **홈** — 셸이 이미 522ms 막혀 있다. `HomePage`가 루트에서 `await queryClient.prefetchQuery(homeQueries.detail())`를 하기 때문이고, 522ms는 `/api/home`의 500ms와 맞는다. `generateMetadata`가 같은 request 안에서 같은 URL·options로 `/api/home`을 부르면 native fetch memoization 대상이 되어 순증이 0에 가까울 수 있다 — **미검증. 구현 후 서버 로그 계수로 확인한다.**
+- **홈** — 셸이 이미 522ms 막혀 있다. `HomePage`가 루트에서 `await queryClient.prefetchQuery(homeQueries.detail())`를 하기 때문이고, 522ms는 `/api/home`의 500ms와 맞는다. `generateMetadata`가 같은 request 안에서 같은 URL·options로 `/api/home`을 부르면 native fetch memoization 대상이 되어 순증이 0에 가까울 수 있다 — **구현 후 확인 결과 이 가설이 맞았다**(호출 1회, TTFB 순증 ≈ 0. 아래 "홈 호출 횟수 재조사" 참고).
 
 부수적으로 확인된 것: **홈에 `h1`이 없다.** 아래 접근성 최소 회귀 항목과 직접 걸린다.
 
@@ -99,7 +99,7 @@ UA 분기가 없는 지금은 두 UA가 같은 경로로 처리되어 같은 값
 | --------------------------------------------------------------------------- | ---- |
 | metadata와 본문이 같은 URL 정규화·query factory·GET URL·options를 쓰는 지점 | 홈: 둘 다 `homeQueries.detail()`. 목록: 둘 다 `createLoader(productListParsers)`로 파싱한 `filters`를 `productQueries.list(filters)`에 넘김 — 내부에서 `toProductListQuery()`로 동일 정규화(q trim+소문자, page clamp) 후 동일 GET URL 조립 |
 | 서버 `getQueryClient()`가 호출마다 새 인스턴스를 만드는지                   | 그렇다(`src/shared/api/getQueryClient.ts`: `() => new QueryClient(...)`). metadata와 본문은 TanStack Query 캐시를 공유하지 않는다 |
-| request 범위 native fetch memoization의 적용 범위                           | **실측 결과, 기대와 다름.** 홈은 memoization되지 않고 `/api/home`이 요청당 2회 호출됨(아래 서버 호출 계수 참고) — 원인 미확정, 아래 "해석" 참고 |
+| request 범위 native fetch memoization의 적용 범위                           | **홈은 적용됨**(`/api/home` 요청당 1회 — 아래 서버 호출 계수 참고). `generateMetadata`와 페이지 렌더가 같은 memoization 스코프를 공유한다. **목록은 적용 대상이 아니다** — `productQueries.ts:20`이 `queryFn: ({ signal }) => getProductList(query, signal)`로 `AbortSignal`을 넘겨 `apiFetch(..., { signal })`가 되는데, Next.js 문서상 signal을 넘긴 fetch는 memoization에서 opt-out된다. 지금은 목록의 서버 측 호출자가 metadata 하나뿐(2단계에서 server prefetch 철회)이라 중복이 드러나지 않지만, 목록에 server prefetch를 되살리면 이 signal 때문에 2회로 늘어난다 |
 
 **재현과 증거**
 
@@ -119,10 +119,26 @@ APP_ORIGIN=http://127.0.0.1:9 pnpm start
 
 | 항목                                     | 내용 |
 | ---------------------------------------- | ---- |
-| 계수 방법 (Browser Network 아님)         | `app/api/home/route.ts`, `app/api/products/route.ts`의 `GET` 진입부에 `console.log('[CALL-COUNT] ...', request.nextUrl.href)`를 임시로 추가 → `curl`로 각 페이지 1회 요청 → 서버 stdout 로그 확인 |
-| 동일 slow Route Handler 호출 횟수 — 홈   | **2회** (`/api/home` 로그가 요청당 2줄). `generateHomeMetadata`의 `fetchQuery`와 `HomePage`의 `prefetchQuery`가 각각 별도로 `/api/home`을 호출 — **fetch memoization으로 합쳐지지 않았다.** 설계 문서의 "순증 0에 가까울 수 있음" 가설이 실측으로 반증됨 |
+| 계수 방법 (Browser Network 아님)         | `app/api/home/route.ts`, `app/api/products/route.ts`의 `GET` 진입부에 `console.log('[CALL-COUNT] ...', request.nextUrl.href)`를 임시로 추가 → `curl`로 각 페이지 1회 요청 → 서버 stdout 로그 확인. 재조사에서는 요청 직전/직후 로그 줄 수를 차분해 요청 1회당 증가분만 세도록 방법을 강화했다(누적 로그를 통째로 읽지 않게) |
+| 동일 slow Route Handler 호출 횟수 — 홈   | **1회.** `generateHomeMetadata`의 `fetchQuery`와 `HomePage`의 `prefetchQuery`가 서로 다른 QueryClient를 쓰지만, 최종 native fetch가 같은 URL·options라 request 범위 memoization으로 합쳐진다. 설계 문서의 "순증 0에 가까울 수 있음" 가설이 **실측으로 확인됨** — `generateMetadata` 도입 전 baseline TTFB 522 ms와 도입 후 521.9 ms가 같다(순증 ≈ 0)<br>※ 이 항목은 재조사로 정정됐다. 최초 계수에서 "2회"로 기록했으나 재현되지 않았다 — 상세는 아래 "홈 호출 횟수 재조사" 참고 |
 | 동일 slow Route Handler 호출 횟수 — 목록 | **1회**. `/api/products`는 metadata에서만 호출됨(본문은 2단계 이후 클라이언트 `useQuery`가 소유해 서버에서 호출하지 않음 — curl은 JS를 실행하지 않으므로 브라우저 쪽 호출은 이 계수에 포함되지 않음) |
 | 임시 계측 제거 확인                      | 완료. `git diff app/api/home/route.ts app/api/products/route.ts`로 원상 복구 확인(diff 없음) |
+
+**홈 호출 횟수 재조사** (SHA `e3fdf8e5`, `APP_ORIGIN=http://127.0.0.1:3001 pnpm build && pnpm start -p 3001`, 4단계 측정 서버와 별도 포트로 격리)
+
+최초 계수에서 홈을 "2회"로 기록했으나 재현되지 않아 다시 조사했다. 결론은 **1회이고 memoization은 정상 동작한다.** 근거 5개가 모두 일치한다.
+
+| # | 확인 | 결과 |
+| --- | --- | --- |
+| 1 | Route Handler 계수 — 일반 UA·브라우저 UA·`facebookexternalhit`·`RSC: 1` 헤더·반복 요청 | 5개 조건 모두 1회 |
+| 2 | dev 서버(`pnpm dev`)에서도 계수 (렌더 중복 가능성 배제) | 1회 |
+| 3 | 프로브 실험 — TanStack Query를 우회해 `generateMetadata`와 `HomePage`에서 동일 URL(`/api/home?probe=cross`)을 raw `fetch`로 1회씩 호출 | 1회 → 두 경계가 memoization 스코프를 **공유**함을 직접 확인 |
+| 4 | 통제 — `generateMetadata`가 조용히 실패해 호출이 1회인 것은 아닌지 | 초기 HTML `<title>매일 새롭게 발견하는 취향 \| Commerce</title>`가 API 응답(`home.banner.title`)에서 생성됨. 즉 실제로 fetch했는데도 로그는 1줄 |
+| 5 | TTFB 산술 — `/api/home` 단독 505~506 ms vs `/` 문서 TTFB 519~528 ms | 직렬 2회면 ≥1,010 ms여야 하는데 1회분(506 ms) + 오버헤드 ~16 ms와 일치 |
+
+최초 "2회"의 발생 경위는 특정하지 못했다. 재현 시도한 조건(production·dev, UA·요청 유형 5종, 콜드·워밍)에서 모두 1회였고, `homeQueries.ts`는 week-06 커밋 이후 수정된 적이 없어 "당시엔 `AbortSignal`을 넘겼다"는 가능성도 배제된다. 누적 로그를 두 번 이상의 요청에 걸쳐 읽었을 가능성이 가장 유력하나 원본 로그가 남아있지 않아 확증하지 못했다.
+
+참고로 Next.js `fetch` 문서의 memoization 적용 대상 목록은 "Server Components, layouts, pages, `generateStaticParams`, `generateViewport`"로 `generateMetadata`를 명시하지 않는다. 그러나 위 3번 프로브 실험에서 실제로는 스코프가 공유됨을 확인했다.
 
 **document / RSC 경계와 최종 URL**
 
