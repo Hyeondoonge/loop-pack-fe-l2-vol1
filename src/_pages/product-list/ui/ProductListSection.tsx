@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import SearchInput from './SearchInput';
 import ProductGridSkeleton from './ProductGridSkeleton';
 import { useProductListFilters } from '../model/useProductListFilters';
-import { CATEGORY_OPTIONS, PRODUCT_PAGE_SIZE, SORT_OPTIONS } from '../model/productListConstants';
+import { CATEGORY_OPTIONS, PRODUCT_PAGE_SIZE, SORT_LABELS, SORT_OPTIONS } from '../model/productListConstants';
 import { resolvePageOverflow } from '../lib/resolvePageOverflow';
 import { productQueries } from '../api/productQueries';
 import { findLastSuccessfulProductList } from '../api/findLastSuccessfulProductList';
@@ -20,14 +20,6 @@ interface ProductResultsProps {
   isStale: boolean;
   onPageChange: (value: number) => void;
 }
-
-// AI 생성: 설계 문서에 옵션 라벨 맵이 없어 직접 정의한다.
-const SORT_LABELS: Record<(typeof SORT_OPTIONS)[number], string> = {
-  latest: '최신순',
-  popular: '인기순',
-  'price-asc': '가격 낮은순',
-  'price-desc': '가격 높은순'
-};
 
 // AI 생성: <select>의 onChange가 넘겨주는 값은 string이라 그대로 세터에 전달할 수 없다. 프로젝트가 as 단언을 금지하므로 타입 가드로 좁힌다.
 function isCategoryOption(value: string): value is CategoryId | 'all' {

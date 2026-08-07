@@ -41,7 +41,7 @@ export default function HomeSection() {
   const { data: home } = useSuspenseQuery(homeQueries.detail());
 
   return (
-    <main className="page-container">
+    <>
       {/* AI 생성: 7주차 측정용 HeroSection이 같은 banner.title·description을 렌더하므로,
           문구가 중복되지 않도록 기존 home-hero 배너를 그대로 대체한다. 이미지 최적화와
           렌더링 경계 조정은 Before 측정 뒤 1단계에서 다룬다. */}
@@ -58,6 +58,6 @@ export default function HomeSection() {
       </section>
       <ProductGridSection title="인기 상품" products={home.popularProducts} />
       <ProductGridSection title="신상품" products={home.newProducts} />
-    </main>
+    </>
   );
 }
