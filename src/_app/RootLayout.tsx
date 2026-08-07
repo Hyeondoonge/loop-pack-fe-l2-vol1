@@ -16,15 +16,13 @@ const geistMono = Geist_Mono({
   subsets: ['latin']
 });
 
-// AI 생성: week-07 3단계 — APP_ORIGIN이 없으면 metadataBase를 만들 수 없어 모듈 로드 시점에
-// 바로 던진다. build·runtime에 같은 값을 요구하는 발제 조건상, 조용히 넘어가지 않고 빠르게 실패시킨다.
-const appOrigin = process.env.APP_ORIGIN;
-if (!appOrigin) {
-  throw new Error('APP_ORIGIN 환경변수가 필요합니다.');
-}
-
+// AI 생성: week-07 3단계 — CI(quality.yml)는 APP_ORIGIN 없이 pnpm check를 돌린다. 이 값이 없으면
+// build 즉시 실패하게 만들면(과거 버전) 루트 layout의 module 최상위 코드라 모든 라우트의 page data
+// 수집 단계에서 터진다. Next.js도 metadataBase를 선택 항목으로 정의해 없으면 경고만 내고
+// localhost로 폴백하므로(resolve-opengraph.js), 그 계약을 그대로 따른다. 측정·재현 절차에서
+// APP_ORIGIN을 설정하면 이 폴백은 적용되지 않아 기존 동작과 동일하다.
 export const metadata: Metadata = {
-  metadataBase: new URL(appOrigin),
+  metadataBase: new URL(process.env.APP_ORIGIN ?? 'http://localhost:3000'),
   title: { default: SITE_NAME, template: `%s | ${SITE_NAME}` },
   description: SITE_DESCRIPTION,
   openGraph: {

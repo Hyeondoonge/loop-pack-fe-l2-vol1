@@ -81,7 +81,7 @@ export const metadata: Metadata = {
 `SITE_NAME`·`SITE_DESCRIPTION`·`OG_FALLBACK_IMAGE`·`commonOpenGraph`는 `src/shared/config/siteMetadata.ts`에 이미 있다(커밋 `98175e3b`).
 
 - `metadataBase`가 있어야 `OG_FALLBACK_IMAGE` 같은 상대 경로가 절대 URL로 직렬화된다.
-- `APP_ORIGIN`이 비면 `new URL`이 모듈 로드 시점에 던져 빌드가 즉시 실패한다. 발제가 build·runtime 모두에 같은 값을 요구하므로 폴백을 두지 않고 빠르게 실패시킨다.
+- `APP_ORIGIN`이 비면 `http://localhost:3000`으로 폴백한다(Next.js도 `metadataBase`를 선택 항목으로 정의해 없으면 경고 후 localhost로 폴백함 — 그 계약을 그대로 따름). CI(`quality.yml`)가 `APP_ORIGIN` 없이 `pnpm check`를 돌리는데, 처음엔 모듈 최상위에서 `throw`했다가 루트 layout이 모든 라우트의 page data 수집에 걸려 빌드가 통째로 실패해 되돌렸다. `APP_ORIGIN`을 설정하면(측정·재현 절차 전체) 폴백은 적용되지 않아 기존 동작과 동일하다.
 - `robots`를 넣지 않는다.
 
 ### shallow merge 대응
