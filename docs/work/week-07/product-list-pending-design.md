@@ -1,6 +1,6 @@
 # 상품 목록 pending · 갱신 · 실패 상태 설계 (7주차 2단계)
 
-> 이 문서는 7주차 2단계에서 확인한 세 가지 불일치의 대응 설계다. 측정 기록과 판단 근거는 [measurement-and-decisions.md](./measurement-and-decisions.md) 2️⃣ 절을, 발제 요구는 [week-07.md](../../assignments/week-07.md) 2단계를 참고한다.
+> 이 문서는 7주차 2단계에서 확인한 세 가지 불일치의 대응 설계다. 측정 기록과 판단 근거는 [02-list-pending-cls.md](./02-list-pending-cls.md) 2️⃣ 절을, 발제 요구는 [week-07.md](../../assignments/week-07.md) 2단계를 참고한다.
 
 ## 결정 요약
 
