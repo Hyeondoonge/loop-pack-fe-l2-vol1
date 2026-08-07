@@ -12,9 +12,9 @@ slow API의 1.5초 지연은 그대로 둔다.
 | ----------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | 데이터 없는 최초 진입   | 실제 목록 크기를 예상할 수 있는 pending UI | ✅ **해소.** 그리드 스켈레톤 12개(실제 `.product-grid` 재사용)가 초기 HTML에 포함되고, 데이터 도착 시 실제 12개로 교체. 서버 prefetch를 제거해 이 분기가 실제로 도달한다 — 5회 모두 `skeleton@26~50ms → grid@1549~1578ms` | `isPending` — 서버 prefetch 제거로 실제 도달 확인됨 |
 | 이전 데이터가 있는 갱신 | 기존 목록을 비우지 않고 갱신 중임을 표시   | ✅ **해소.** 기존 목록 유지 + 상태줄 `총 30개 · 갱신 중` + 그리드 `is-stale`(opacity, 레이아웃 영향 없음) + `aria-busy=true`. 실측 확인 | `isFetching && !isPending` (신규 조건 요청이면 `isPlaceholderData`도 참) |
-| 성공 + 0건              | 현재 URL 조건과 결과 0건임을 명시          | 일치 — "총 0개" + 안내문구 확인(스크린샷 4.png, 브라우저 재확인) | `isSuccess`(데이터 있음, `totalCount === 0`)                                                                                               |
-| 최초 실패               | 목록 대신 실패 이유와 다시 시도할 방법     | 일치 — 에러문구 + 재시도 버튼 확인(스크린샷 3.png, 브라우저 재확인) | `isError && !productList`                                                                                                                  |
-| 갱신 실패               | 기존 목록을 유지한 채 갱신 실패와 재시도   | ✅ **해소, 재검증 완료.** 격리 headless Chrome + CDP `Fetch` 도메인으로 카테고리 변경 직후 `/api/products`만 500 강제해 재현. `git stash`로 수정 전(초안) 코드를 잠시 복원해 재빌드·재현한 뒤(`before-*.png`, `카드 0개` + 전체 `mock error`), `git stash pop`으로 `findLastSuccessfulProductList(queryClient)` 수정본을 복원해 같은 시나리오를 다시 실행(`after-*.png`, `카드 12개` 유지). Before/After 스크린샷 3장씩 `measurements/list-states-recheck/before-01~03.png`, `after-01~03.png` | `isError && !productList`일 때 `findLastSuccessfulProductList`로 대체 — 로컬 state·ref 복사 없이 query cache가 계속 소유 |
+| 성공 + 0건              | 현재 URL 조건과 결과 0건임을 명시          | 일치 — "총 0개" + "검색 결과가 없습니다." + "다른 검색어나 카테고리를 선택해 보세요." 표시를 브라우저에서 확인 | `isSuccess`(데이터 있음, `totalCount === 0`)                                                                                               |
+| 최초 실패               | 목록 대신 실패 이유와 다시 시도할 방법     | 일치 — 목록 대신 에러 문구와 "다시 시도" 버튼이 표시되는 것을 브라우저에서 확인 | `isError && !productList`                                                                                                                  |
+| 갱신 실패               | 기존 목록을 유지한 채 갱신 실패와 재시도   | ✅ **해소, 재검증 완료.** 격리 headless Chrome + CDP `Fetch` 도메인으로 카테고리 변경 직후 `/api/products`만 500 강제해 재현. `git stash`로 수정 전(초안) 코드를 잠시 복원해 재빌드·재현한 뒤(`before-*.png`, `카드 0개` + 전체 `mock error`), `git stash pop`으로 `findLastSuccessfulProductList(queryClient)` 수정본을 복원해 같은 시나리오를 다시 실행(카드 12개 유지). 각 단계를 스크린샷 3장씩으로 대조했고, 판정 결과는 아래 Before/After 표에 옮겨 적었다 | `isError && !productList`일 때 `findLastSuccessfulProductList`로 대체 — 로컬 state·ref 복사 없이 query cache가 계속 소유 |
 | 취소                    | 오류로 보이거나 현재 화면을 덮지 않음      | 일치 — 마지막 요청 결과만 반영, 에러 없음(0단계 확인) | react-query가 query key 변경 시 이전 요청을 자동 취소(`AbortSignal` 전파, `getProductList.ts:19`), 취소된 요청은 `isError`로 노출되지 않음 |
 
 **갱신 실패 재검증** (`APP_ORIGIN=http://localhost:3000`로 재빌드·재기동한 production 서버, 기존 Chrome 세션과 별도 프로필·포트로 격리한 headless Chrome + CDP `Fetch` 도메인)
@@ -28,7 +28,7 @@ slow API의 1.5초 지연은 그대로 둔다.
 | 상태 문구 | 없음(필터 영역만 남고 목록 문맥 소실) | "갱신 실패 — 아래는 이전 조건의 결과입니다 · 총 30개" |
 | 카테고리 select | `disabled: true`, `optionCount: 1`(`전체`만), `value: "all"`로 되돌아감 | `disabled: false`, `optionCount: 6`, `value: "casual"`(시도한 값 유지) |
 | "다시 시도" 버튼 | 있음 | 있음 |
-| 스크린샷 | `measurements/list-states-recheck/before-01-initial-30.png`<br>`before-02-mid-request.png`<br>`before-03-after-error.png` | `measurements/list-states-recheck/after-01-initial-30.png`<br>`after-02-mid-request.png`<br>`after-03-after-error.png` |
+| 대조한 시점 (스크린샷 3장씩) | 최초 30개 정상 로드 → 갱신 요청 중 → 에러 응답 후 | 같은 3시점. 각 시점의 관찰 결과는 위 행들에 옮겨 적었다(이미지 원본은 로컬 보관) |
 
 **판정**: [diagnosis-log.md](./diagnosis-log.md)의 "채택" 결정이 실제 코드 동작으로 확인됨. `findLastSuccessfulProductList`가 `queryClient.getQueryCache()`에서 가장 최근 성공 쿼리를 렌더 중에 직접 조회하는 방식이라(로컬 state·ref 복사 없음) react-query 캐시가 데이터를 계속 소유하고, 필터 UI는 사용자가 시도한 새 값을 그대로 유지해 "무엇을 눌렀는지" 잃지 않는다.
 
@@ -82,7 +82,7 @@ slow API의 1.5초 지연은 그대로 둔다.
 | --- | --- |
 | SSR 문서 응답 5회 (`curl`, `time_starttransfer`) | 0.099 / 0.011 / 0.008 / 0.014 / 0.011 s (첫 회 콜드스타트 제외 4회 평균 0.011 s) — 기존 서술된 1.508~1.522 s → 0.007~0.010 s와 같은 자릿수로 일치 |
 | SSR 초기 HTML | `product-card-skeleton` 12개, `aria-busy="true"` 확인(`measurements/list-ssr-skeleton/ssr-initial-html.html`) — `PRODUCT_PAGE_SIZE=12`와 일치 |
-| 스켈레톤 → 실데이터 전환 (CDP, page load 시점 기준) | t=384ms: skeleton 12/card 0/aria-busy=true → t=1082ms: 동일 → t=2208ms: skeleton 0/card 12/aria-busy=false. 스크린샷 `measurements/list-ssr-skeleton/01~04.png` |
+| 스켈레톤 → 실데이터 전환 (CDP, page load 시점 기준) | t=384ms: skeleton 12/card 0/aria-busy=true → t=1082ms: 동일 → t=2208ms: skeleton 0/card 12/aria-busy=false (각 시점 스크린샷 4장으로 확인, 이미지 원본은 로컬 보관) |
 | 레이아웃 일치 여부 (스크린샷 육안 대조) | 스켈레톤 5열 그리드와 실제 카드 5열 그리드의 카드 높이·시작 y좌표 동일. "총 30개" 문구가 스켈레톤이 있던 자리에 그대로 나타남 |
 
 기존 문서 서술("skeleton@26~50ms → grid@1549~1578ms")과 이번 재검증(전환 완료 시점이 1082~2208ms 구간 안)은 같은 범위를 가리킨다 — 5회 반복이 아닌 CDP 폴링(150ms 간격)이라 전환 정확 시점을 좁히지 못했을 뿐, 결론(스켈레톤이 실 API 지연 1.5초 동안 유지되다가 교체됨)은 일치한다.

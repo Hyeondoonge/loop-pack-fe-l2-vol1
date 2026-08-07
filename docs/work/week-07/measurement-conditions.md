@@ -23,7 +23,7 @@ SHA를 제외한 모든 조건을 Before/After에서 같게 둔다.
 | 브라우저        | HeadlessChrome 151.0.0.0 (Lighthouse CLI가 실행)                                                                                                                                                                                        |
 | Lighthouse 버전 | 13.3.0                                                                                                                                                                                                                                  |
 | 브라우저 프로필 | CLI가 실행마다 새로 만드는 임시 프로필 (확장·캐시 없음) — 5회 모두 Hero가 캐시 히트 없이 full transfer(7,545,525 B, 7,989~8,025 ms)된 것으로 회차 간 캐시가 남지 않음을 확인했다. 시크릿 창 재사용과 달리 매 회차 cold load가 보장된다. |
-| 측정 방법       | `scripts/lighthouse-measure.sh` — raw JSON·트레이스·filmstrip을 `measurements/<label>/`에 저장                                                                                                                                          |
+| 측정 방법       | `scripts/lighthouse-measure.sh` — raw JSON·트레이스·filmstrip을 `measurements/<label>/`에 저장. 이 중 원격에 올리는 것은 raw JSON(`run-N.json`)뿐이고, 트레이스(`run-N-0.trace.json`, 회당 5~23 MB)·devtoolslog·filmstrip PNG는 용량 때문에 로컬에만 둔다 — 문서의 수치는 모두 raw JSON에서 나온 값이다 |
 | `APP_ORIGIN`    | build와 runtime에 같은 값 — -                                                                                                                                                                                                           |
 
 > localhost Open Graph URL은 배포 증거로 쓰지 않는다.
