@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import SearchInput from './SearchInput';
 import ProductGridSkeleton from './ProductGridSkeleton';
 import { useProductListFilters } from '../model/useProductListFilters';
 import { CATEGORY_OPTIONS, PRODUCT_PAGE_SIZE, SORT_OPTIONS } from '../model/productListConstants';
 import { resolvePageOverflow } from '../lib/resolvePageOverflow';
 import { productQueries } from '../api/productQueries';
+import { findLastSuccessfulProductList } from '../api/findLastSuccessfulProductList';
 import { ApiError } from '@/shared/api/apiFetch';
 import { ProductCardWithActions } from '@/widgets/product-card';
 import type { CategoryId, Product, ProductSort } from '@/entities/product';
@@ -110,6 +111,7 @@ function ProductResults({ products, page, totalPages, isStale, onPageChange }: P
 
 export default function ProductListSection() {
   const { filters, setQuery, setCategory, setSort, setPage, correctPage, resetFilters } = useProductListFilters();
+  const queryClient = useQueryClient();
 
   // AI 생성: ESLint id-denylist 규칙이 식별자 data를 금지해서 productList로 이름을 바꿔 구조분해한다.
   // isPending: 이 필터 조합의 캐시가 아직 한 번도 없음(첫 로딩). isPlaceholderData: keepPreviousData로
@@ -136,7 +138,16 @@ export default function ProductListSection() {
     if (isSortOption(value)) setSort(value);
   }
 
-  const totalPages = productList ? Math.ceil(productList.totalCount / productList.pageSize) : 0;
+  // AI 생성: 필터를 바꾼 갱신이 실패하면 새 query key에는 데이터가 없어(keepPreviousData는 pending
+  // 동안에만 이전 결과를 준다) 사용자가 보던 목록이 통째로 사라졌다. 이때만 직전 성공 결과를 query
+  // cache에서 찾아 화면에 남긴다. 지금 URL 조건의 결과가 아니라는 사실은 상태줄 문구로 밝힌다.
+  // ponytail: 렌더 중 캐시를 한 번 읽는 방식이라 캐시 변화에 반응하지 않는다. 이 값을 쓰는 시점은
+  // 에러 렌더 직후뿐이라 충분하고, 실시간 반영이 필요해지면 useQuery를 하나 더 두는 쪽으로 올린다.
+  const staleList = isError && !productList ? findLastSuccessfulProductList(queryClient) : null;
+  const shownList = productList ?? staleList;
+  const isShowingPreviousCondition = !productList && staleList !== null;
+
+  const totalPages = shownList ? Math.ceil(shownList.totalCount / shownList.pageSize) : 0;
   // AI 생성: isPending은 "이 필터 조합의 데이터가 아직 없다"(최초 진입), isFetching은 "요청이 진행 중"이다.
   // 최초 진입은 아래에서 스켈레톤이 따로 담당하므로 여기서는 이미 목록이 있는 상태의 갱신만 가린다.
   const isUpdating = isFetching && !isPending;
@@ -152,10 +163,10 @@ export default function ProductListSection() {
             카테고리
             {/* AI 생성: 결과 쿼리 실패·첫 로딩 시 productList.categories가 없다. 필터 영역은 항상 렌더해야
             하므로(에러여도 사용자가 갇히지 않게) 이때는 '전체' 하나만 두고 select를 비활성화한다. */}
-            <select name="category" value={filters.category} disabled={!productList} onChange={(event) => handleCategoryChange(event.target.value)}>
-              {/* AI 생성: client-state-design.md 12번 — 'all'은 서버 categories에 없는 필터 개념이라 client가 붙이는 합성 옵션. 나머지 라벨은 서버 응답(productList.categories)에서 그린다. */}
+            <select name="category" value={filters.category} disabled={!shownList} onChange={(event) => handleCategoryChange(event.target.value)}>
+              {/* AI 생성: client-state-design.md 12번 — 'all'은 서버 categories에 없는 필터 개념이라 client가 붙이는 합성 옵션. 나머지 라벨은 서버 응답(shownList.categories)에서 그린다. */}
               <option value="all">전체</option>
-              {productList?.categories.map((category) => (
+              {shownList?.categories.map((category) => (
                 <option value={category.id} key={category.id}>
                   {category.name}
                 </option>
@@ -180,21 +191,21 @@ export default function ProductListSection() {
             없는 실패(최초 실패)만 전체 에러 화면으로 대체한다. */}
         {isPending ? (
           <ProductGridSkeleton count={PRODUCT_PAGE_SIZE} />
-        ) : !productList ? (
+        ) : !shownList ? (
           <ProductResultsError error={error} isFetching={isFetching} onRetry={() => void refetch()} onResetFilters={resetFilters} />
         ) : (
           <>
             <p className="product-list-status">
-              <span>
-                총 {productList.totalCount}개{statusNote}
-              </span>
+              {/* AI 생성: 이전 조건의 결과를 남겨둔 상태에서는 개수만 보여주면 지금 URL 조건의 결과처럼
+                  읽힌다. 무엇을 보고 있는지 문구로 분명히 밝혀 화면이 URL에 대해 거짓말하지 않게 한다. */}
+              <span>{isShowingPreviousCondition ? `갱신 실패 — 아래는 이전 조건의 결과입니다 · 총 ${shownList.totalCount}개` : `총 ${shownList.totalCount}개${statusNote}`}</span>
               {isError && (
                 <button type="button" disabled={isFetching} onClick={() => void refetch()}>
                   다시 시도
                 </button>
               )}
             </p>
-            <ProductResults products={productList.products} page={filters.page} totalPages={totalPages} isStale={isUpdating || isError} onPageChange={setPage} />
+            <ProductResults products={shownList.products} page={filters.page} totalPages={totalPages} isStale={isUpdating || isError} onPageChange={setPage} />
           </>
         )}
       </section>
