@@ -3,8 +3,9 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import SearchInput from './SearchInput';
+import ProductGridSkeleton from './ProductGridSkeleton';
 import { useProductListFilters } from '../model/useProductListFilters';
-import { CATEGORY_OPTIONS, SORT_OPTIONS } from '../model/productListConstants';
+import { CATEGORY_OPTIONS, PRODUCT_PAGE_SIZE, SORT_OPTIONS } from '../model/productListConstants';
 import { resolvePageOverflow } from '../lib/resolvePageOverflow';
 import { productQueries } from '../api/productQueries';
 import { ApiError } from '@/shared/api/apiFetch';
@@ -15,6 +16,7 @@ interface ProductResultsProps {
   products: Product[];
   page: number;
   totalPages: number;
+  isStale: boolean;
   onPageChange: (value: number) => void;
 }
 
@@ -71,7 +73,7 @@ function ProductResultsError({ error, isFetching, onRetry, onResetFilters }: Pro
   );
 }
 
-function ProductResults({ products, page, totalPages, onPageChange }: ProductResultsProps) {
+function ProductResults({ products, page, totalPages, isStale, onPageChange }: ProductResultsProps) {
   if (products.length === 0) {
     // AI 생성: 빈 결과 안내 문구. 로딩/에러 화면과 구분되도록 별도 문구를 쓴다.
     return (
@@ -84,7 +86,9 @@ function ProductResults({ products, page, totalPages, onPageChange }: ProductRes
 
   return (
     <>
-      <div className="product-grid">
+      {/* AI 생성: 갱신 중이거나 갱신에 실패했을 때 목록을 흐리게 해 최신 결과가 아님을 알린다.
+          opacity는 레이아웃에 영향을 주지 않는 속성이라 이 표시가 CLS를 만들지 않는다. */}
+      <div className={isStale ? 'product-grid is-stale' : 'product-grid'}>
         {products.map((product) => (
           <ProductCardWithActions key={product.id} product={product} headingLevel="h2" />
         ))}
@@ -116,11 +120,13 @@ export default function ProductListSection() {
   // 파생값을 state로 복사하는 용도가 아니어서 프로젝트의 effect 금지 규칙에 해당하지 않는다.
   // AI 생성: isPlaceholderData 중엔 productList가 "이전 필터"의 응답이라 그 totalCount로 최신 filters.page를
   // 판단하면 안 된다(아직 도착하지 않은 페이지를 옛 응답 기준으로 잘못 교정). 에러·첫 로딩(productList 없음)도 건너뛴다.
+  // AI 생성: 갱신 실패로 이전 조건의 목록을 유지하는 중에도 그 응답의 totalCount로 현재 page를
+  // 교정하면 안 된다(화면에 남은 값은 지금 URL 조건의 결과가 아니다). isError도 함께 건너뛴다.
   useEffect(() => {
-    if (!productList || isPlaceholderData) return;
+    if (!productList || isPlaceholderData || isError) return;
     const corrected = resolvePageOverflow(filters.page, productList.totalCount, productList.pageSize);
     if (corrected !== null) correctPage(corrected);
-  }, [filters.page, productList, isPlaceholderData, correctPage]);
+  }, [filters.page, productList, isPlaceholderData, isError, correctPage]);
 
   function handleCategoryChange(value: string) {
     if (isCategoryOption(value)) setCategory(value);
@@ -131,6 +137,10 @@ export default function ProductListSection() {
   }
 
   const totalPages = productList ? Math.ceil(productList.totalCount / productList.pageSize) : 0;
+  // AI 생성: isPending은 "이 필터 조합의 데이터가 아직 없다"(최초 진입), isFetching은 "요청이 진행 중"이다.
+  // 최초 진입은 아래에서 스켈레톤이 따로 담당하므로 여기서는 이미 목록이 있는 상태의 갱신만 가린다.
+  const isUpdating = isFetching && !isPending;
+  const statusNote = isUpdating ? ' · 갱신 중' : isError ? ' · 갱신 실패' : '';
 
   return (
     <main className="page-container">
@@ -164,15 +174,27 @@ export default function ProductListSection() {
           </label>
         </div>
       </section>
-      <section className="content-section" aria-label="상품 검색 결과" aria-busy={isPlaceholderData}>
-        {isError ? (
+      <section className="content-section" aria-label="상품 검색 결과" aria-busy={isFetching}>
+        {/* AI 생성: isError를 먼저 보지 않고 productList 유무를 먼저 본다. react-query는 갱신에 실패해도
+            마지막 성공 데이터를 지우지 않으므로, 목록이 남아 있으면 유지한 채 실패를 알리고, 목록이
+            없는 실패(최초 실패)만 전체 에러 화면으로 대체한다. */}
+        {isPending ? (
+          <ProductGridSkeleton count={PRODUCT_PAGE_SIZE} />
+        ) : !productList ? (
           <ProductResultsError error={error} isFetching={isFetching} onRetry={() => void refetch()} onResetFilters={resetFilters} />
-        ) : isPending ? (
-          <p>상품 목록을 불러오는 중입니다...</p>
         ) : (
           <>
-            <p>총 {productList.totalCount}개</p>
-            <ProductResults products={productList.products} page={filters.page} totalPages={totalPages} onPageChange={setPage} />
+            <p className="product-list-status">
+              <span>
+                총 {productList.totalCount}개{statusNote}
+              </span>
+              {isError && (
+                <button type="button" disabled={isFetching} onClick={() => void refetch()}>
+                  다시 시도
+                </button>
+              )}
+            </p>
+            <ProductResults products={productList.products} page={filters.page} totalPages={totalPages} isStale={isUpdating || isError} onPageChange={setPage} />
           </>
         )}
       </section>
