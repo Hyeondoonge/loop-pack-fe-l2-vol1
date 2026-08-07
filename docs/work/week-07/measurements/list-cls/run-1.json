@@ -1,0 +1,19 @@
+{
+  "rep": 1,
+  "category": "casual",
+  "error_seen": false,
+  "error_state": {
+    "gridExists": true,
+    "errorText": false,
+    "failCount": 1
+  },
+  "cls_after_error": [],
+  "click_result": false,
+  "success_seen": true,
+  "final_state": {
+    "gridExists": true,
+    "countText": "총 30개",
+    "cardCount": 12
+  },
+  "cls_final": []
+}

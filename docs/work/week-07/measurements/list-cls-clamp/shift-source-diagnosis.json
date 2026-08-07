@@ -1,0 +1,14 @@
+{
+  "synthetic_change_event": {
+    "value": 0.217439,
+    "sources": [
+      { "tag": "ARTICLE.product-card", "text": "Loopers Select[1+1] 베이직 무" },
+      { "tag": "ARTICLE.product-card", "text": "Loopers Select[Woman]케이블 " }
+    ]
+  },
+  "trusted_input_click_and_key_via_CDP_Input_domain": {
+    "value": 0.21743931167879527,
+    "hadRecentInput": false,
+    "note": "실제 마우스 클릭+키보드 이벤트(CDP Input 도메인, isTrusted)로도 결과 동일. 원인은 slow API 1.5초 지연이 Layout Instability API의 500ms recent-input 유예 기간을 넘겨, 실제 사용자 클릭이었어도 이 shift는 CLS에 그대로 집계됨."
+  }
+}
