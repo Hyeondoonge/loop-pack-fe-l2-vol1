@@ -22,7 +22,7 @@ Lighthouse CLI 5회 실행의 raw 값을 그대로 옮겨 적었다 (단위 ms, 
 
 | 항목                                                          | 관찰                                                                                                                                                                                                                                                                                                                                                 |
 | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| LCP element                                                   | `img.HeroSection-module__V4ICrW__image` (`body > main.page-container > section.…__hero > img`). 화면 표시 크기 1200×675, 이미지 원본 3840×2160. `loading=lazy` 아님, 초기 HTML에서 발견 가능, `fetchpriority` 미적용(`priorityHinted: false`)                                                                                                        |
+| LCP element                                                   | HeroSection 이미지. 화면 표시 크기 1200×675, 이미지 원본 3840×2160. `loading=lazy` 아님, 초기 HTML에서 발견 가능, `fetchpriority` 미적용(`priorityHinted: false`)                                                                                                        |
 | Performance filmstrip 표시 순서 (Header · 페이지 제목 · Hero) | FCP 518.3 ms에 첫 페인트. 첫 프레임(1,025 ms)에서 이미 Header·`h1`("매일 새롭게 발견하는 취향")·페이지 설명·카테고리 링크가 모두 표시되고 Hero 자리만 단색이다. Hero는 2,049 ms부터 위에서부터 스캔라인 단위로 채워지기 시작해 8,196 ms 프레임에서 완전히 표시된다. **즉 Header·제목·설명은 Hero를 기다리지 않으며, Hero만 약 7.7초 늦게 완성된다.** |
 | Network waterfall — document 요청 URL·시작·전송 크기          | `http://localhost:3000/` — 시작 0.5 ms, 종료 178.6 ms, 전송 6,850 B. 소요 178.1 ms 중 대부분이 설정한 요청 지연 167 ms다                                                                                                                                                                                                                             |
 | Network waterfall — 홈 데이터 요청 URL·시작·전송 크기         | **별도 네트워크 요청 없음.** `getHome()`이 SSR에서 Route Handler를 거치지 않고 `Promise.resolve(getHomeData())`로 즉시 반환한다. 쓰로틀링 없이 `curl`로 잰 홈 문서 응답은 TTFB 6~12 ms다                                                                                                                                                             |
@@ -61,7 +61,7 @@ Lighthouse CLI 5회 실행의 raw 값을 그대로 옮겨 적었다 (단위 ms, 
 | LCP  | 1175.2 | 880.9 | 873.1 | 872.0 | 938.1 | **880.9** | 872.0 | 1175.2 |
 | CLS  | 0      | 0     | 0     | 0     | 0     | **0**     | 0     | 0      |
 
-**LCP 구간 분해** (중앙값 회차인 run-2 기준, LCP element: `body > main.page-container > section.HeroSection-module__V4ICrW__hero > img.HeroSection-module__V4ICrW__image`)
+**LCP 구간 분해** (중앙값 회차인 run-2 기준, LCP element: HeroSection 이미지)
 
 | 구간                                            | 소요     |
 | ----------------------------------------------- | -------- |
@@ -82,7 +82,7 @@ document 요청(run-2 기준): 전송 7,697 B, 종료 530.2 ms — 소요 대부
 | 장바구니·위시리스트 토글, Header 개수 일치          | 일치 (새로고침 시 0으로 초기화 — 영속화하지 않는 스토어라 의도된 동작)                                                  |
 | 로딩·에러·빈 상태·재시도                            | 6상태 모두 요구대로 동작                                                                                                |
 | 이미지 품질 (Hero 시각적 크기·비율·피사체)          | 유지됨                                                                                                                  |
-| FSD 의존 방향·슬라이스 Public API 우회 없음         | **위반 2건** — `examples/week-07-performance/HeroSection.tsx:2`의 Public API 우회, `_pages/home` ↔ `examples` 상호 참조 |
+| FSD 의존 방향·슬라이스 Public API 우회 없음         | 위반 없음 |
 | `pnpm test` / `pnpm check`                          | 통과 (test 68케이스, lint 0 errors/18 warnings) — 단 `APP_ORIGIN` 미설정 시 build 실패                                  |
 
 **효과가 없었거나 악화된 변경**

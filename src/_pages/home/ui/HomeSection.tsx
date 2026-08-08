@@ -5,7 +5,7 @@
 import Link from 'next/link';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { homeQueries } from '@/_pages/home/api/homeQueries';
-import { HeroSection } from '@/examples/week-07-performance/HeroSection';
+import { HeroSection } from '@/_pages/home/ui/HeroSection';
 import { ProductCardWithActions } from '@/widgets/product-card';
 import type { Product } from '@/entities/product';
 
