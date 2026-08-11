@@ -2,6 +2,38 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
 
+// AI 생성: week-06 Advanced A — FSD 의존성 하네스
+// 레이어 순서(하위 → 상위). 인덱스가 클수록 상위 레이어다.
+const FSD_LAYERS = ['shared', 'entities', 'features', 'widgets', '_pages', '_app'];
+
+// 레이어마다 "자기 레이어 + 자기보다 상위 레이어"의 절대경로 import를 금지한다.
+// - 상위 레이어 차단 = 하위가 상위를 아는 역방향 의존 금지
+// - 자기 레이어 차단 = 같은 레이어의 다른 슬라이스 직접 import 금지
+//   (같은 슬라이스 안 세그먼트끼리는 상대경로로 협력하므로 이 패턴에 걸리지 않는다)
+// - `@/{layer}/*/*` = 슬라이스 루트보다 깊은 경로 차단(public API 우회 금지).
+//   shared는 슬라이스가 없어 세그먼트 직접 참조가 정상이므로 깊은 경로 패턴에서 제외한다.
+const fsdLayerBoundaries = FSD_LAYERS.map((layer, index) => {
+  const blockedLayers = FSD_LAYERS.slice(index);
+  const patterns = [
+    {
+      group: blockedLayers.map((blocked) => `@/${blocked}/*`),
+      message: `${layer}는 자기보다 하위 레이어만 import한다. 같은 레이어의 다른 슬라이스도 직접 import할 수 없다.`
+    },
+    {
+      // 자기 레이어는 위 패턴이 이미 전부 막으므로 제외해 같은 import가 두 번 보고되지 않게 한다.
+      group: FSD_LAYERS.filter((candidate) => candidate !== 'shared' && candidate !== layer).map((sliced) => `@/${sliced}/*/*`),
+      message: '슬라이스는 루트 index.ts(public API)로만 import한다. 내부 세그먼트 직접 참조 금지.'
+    }
+  ];
+
+  return {
+    files: [`src/${layer}/**/*.{ts,tsx}`],
+    rules: {
+      'no-restricted-imports': ['error', { patterns }]
+    }
+  };
+});
+
 const eslintConfig = defineConfig([
   // next/image, next/font, next/script 오용(LCP 저해 등)을 warning이 아닌 error로 강제해 Core Web Vitals 저하를 빌드 단계에서 차단
   ...nextVitals,
@@ -77,7 +109,8 @@ const eslintConfig = defineConfig([
       // 비동기 함수 예외 대응
       '@typescript-eslint/no-floating-promises': 'warn'
     }
-  }
+  },
+  ...fsdLayerBoundaries
 ]);
 
 export default eslintConfig;
