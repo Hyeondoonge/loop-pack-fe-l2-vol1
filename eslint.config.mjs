@@ -1,3 +1,5 @@
+import { readdirSync } from 'node:fs';
+
 import { defineConfig, globalIgnores } from 'eslint/config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
@@ -5,33 +7,52 @@ import nextTs from 'eslint-config-next/typescript';
 // AI 생성: week-06 Advanced A — FSD 의존성 하네스
 // 레이어 순서(하위 → 상위). 인덱스가 클수록 상위 레이어다.
 const FSD_LAYERS = ['shared', 'entities', 'features', 'widgets', '_pages', '_app'];
+// 비즈니스 슬라이스로 나뉘는 레이어. shared·_app은 슬라이스가 없다(FSD 공식).
+const SLICED_LAYERS = ['entities', 'features', 'widgets', '_pages'];
 
-// 레이어마다 "자기 레이어 + 자기보다 상위 레이어"의 절대경로 import를 금지한다.
+const readSlices = (layer) =>
+  readdirSync(`src/${layer}`, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+
+// 슬라이스 하나에 적용할 금지 패턴.
 // - 상위 레이어 차단 = 하위가 상위를 아는 역방향 의존 금지
-// - 자기 레이어 차단 = 같은 레이어의 다른 슬라이스 직접 import 금지
-//   (같은 슬라이스 안 세그먼트끼리는 상대경로로 협력하므로 이 패턴에 걸리지 않는다)
-// - `@/{layer}/*/*` = 슬라이스 루트보다 깊은 경로 차단(public API 우회 금지).
-//   shared는 슬라이스가 없어 세그먼트 직접 참조가 정상이므로 깊은 경로 패턴에서 제외한다.
-const fsdLayerBoundaries = FSD_LAYERS.map((layer, index) => {
-  const blockedLayers = FSD_LAYERS.slice(index);
-  const patterns = [
+// - 같은 레이어의 "다른" 슬라이스만 이름을 하나씩 열거해 차단. 자기 슬라이스는 목록에 없어 통과한다 —
+//   슬라이스 내부 세그먼트끼리는 FSD가 구성 방식을 규정하지 않으므로 절대경로도 정상이다
+//   ("Inside a slice, the code could be organized in any way that you want").
+//   `@/{layer}/*` + `!@/{layer}/{자기 슬라이스}/*` 조합은 gitignore 의미론상 재허용이 되지 않아 쓰지 않는다.
+// - `@/{layer}/*/*` = 다른 레이어 슬라이스의 루트보다 깊은 경로 차단(public API 우회 금지).
+//   shared는 슬라이스가 없어 세그먼트 직접 참조가 정상이라 제외한다.
+const restrictedPatterns = (layer, ownSlice) => {
+  const upperLayers = FSD_LAYERS.slice(FSD_LAYERS.indexOf(layer) + 1);
+  const sameLayer = ownSlice
+    ? readSlices(layer)
+        .filter((slice) => slice !== ownSlice)
+        .flatMap((slice) => [`@/${layer}/${slice}`, `@/${layer}/${slice}/*`])
+    : [`@/${layer}/*`];
+
+  return [
     {
-      group: blockedLayers.map((blocked) => `@/${blocked}/*`),
+      group: [...upperLayers.map((upper) => `@/${upper}/*`), ...sameLayer],
       message: `${layer}는 자기보다 하위 레이어만 import한다. 같은 레이어의 다른 슬라이스도 직접 import할 수 없다.`
     },
     {
-      // 자기 레이어는 위 패턴이 이미 전부 막으므로 제외해 같은 import가 두 번 보고되지 않게 한다.
-      group: FSD_LAYERS.filter((candidate) => candidate !== 'shared' && candidate !== layer).map((sliced) => `@/${sliced}/*/*`),
-      message: '슬라이스는 루트 index.ts(public API)로만 import한다. 내부 세그먼트 직접 참조 금지.'
+      // 자기 레이어는 위 패턴이 이미 판정하므로 제외해 같은 import가 두 번 보고되지 않게 한다.
+      group: SLICED_LAYERS.filter((sliced) => sliced !== layer).map((sliced) => `@/${sliced}/*/*`),
+      message: '다른 슬라이스는 루트 index.ts(public API)로만 import한다. 내부 세그먼트 직접 참조 금지.'
     }
   ];
+};
 
-  return {
-    files: [`src/${layer}/**/*.{ts,tsx}`],
+const fsdLayerBoundaries = FSD_LAYERS.flatMap((layer) => {
+  const scopes = SLICED_LAYERS.includes(layer) ? readSlices(layer).map((slice) => ({ files: `src/${layer}/${slice}/**/*.{ts,tsx}`, ownSlice: slice })) : [{ files: `src/${layer}/**/*.{ts,tsx}`, ownSlice: null }];
+
+  return scopes.map(({ files, ownSlice }) => ({
+    files: [files],
     rules: {
-      'no-restricted-imports': ['error', { patterns }]
+      'no-restricted-imports': ['error', { patterns: restrictedPatterns(layer, ownSlice) }]
     }
-  };
+  }));
 });
 
 const eslintConfig = defineConfig([
