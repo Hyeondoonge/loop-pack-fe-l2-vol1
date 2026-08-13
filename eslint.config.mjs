@@ -1,58 +1,44 @@
-import { readdirSync } from 'node:fs';
-
 import { defineConfig, globalIgnores } from 'eslint/config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
+import boundaries from 'eslint-plugin-boundaries';
 
-// AI 생성: week-06 Advanced A — FSD 의존성 하네스
-// 레이어 순서(하위 → 상위). 인덱스가 클수록 상위 레이어다.
-const FSD_LAYERS = ['shared', 'entities', 'features', 'widgets', '_pages', '_app'];
-// 비즈니스 슬라이스로 나뉘는 레이어. shared·_app은 슬라이스가 없다(FSD 공식).
-const SLICED_LAYERS = ['entities', 'features', 'widgets', '_pages'];
+//  레이어를 하위 → 상위 순으로 나열한다. 각 레이어는 자기보다 앞에 있는 레이어만 import할 수 있다.
+const FSD_LAYERS = [
+  { type: 'shared', pattern: 'src/shared' },
+  { type: 'entities', pattern: 'src/entities/*', capture: ['slice'] },
+  { type: 'features', pattern: 'src/features/*', capture: ['slice'] },
+  { type: 'widgets', pattern: 'src/widgets/*', capture: ['slice'] },
+  { type: 'pages', pattern: 'src/_pages/*', capture: ['slice'] },
+  { type: 'app', pattern: 'src/_app' }
+];
 
-const readSlices = (layer) =>
-  readdirSync(`src/${layer}`, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name);
+// 슬라이스로 나뉘는 레이어만 public API 강제 대상이다.
+// shared·app은 슬라이스가 없어 내부 경로 직접 참조가 정상이다(FSD 공식).
+const isSliced = (layer) => Boolean(layer.capture);
 
-// 슬라이스 하나에 적용할 금지 패턴.
-// - 상위 레이어 차단 = 하위가 상위를 아는 역방향 의존 금지
-// - 같은 레이어의 "다른" 슬라이스만 이름을 하나씩 열거해 차단. 자기 슬라이스는 목록에 없어 통과한다 —
-//   슬라이스 내부 세그먼트끼리는 FSD가 구성 방식을 규정하지 않으므로 절대경로도 정상이다
-//   ("Inside a slice, the code could be organized in any way that you want").
-//   `@/{layer}/*` + `!@/{layer}/{자기 슬라이스}/*` 조합은 gitignore 의미론상 재허용이 되지 않아 쓰지 않는다.
-// - `@/{layer}/*/*` = 다른 레이어 슬라이스의 루트보다 깊은 경로 차단(public API 우회 금지).
-//   shared는 슬라이스가 없어 세그먼트 직접 참조가 정상이라 제외한다.
-const restrictedPatterns = (layer, ownSlice) => {
-  const upperLayers = FSD_LAYERS.slice(FSD_LAYERS.indexOf(layer) + 1);
-  const sameLayer = ownSlice
-    ? readSlices(layer)
-        .filter((slice) => slice !== ownSlice)
-        .flatMap((slice) => [`@/${layer}/${slice}`, `@/${layer}/${slice}/*`])
-    : [`@/${layer}/*`];
+// 하위 레이어를 향하는 import 허용 규칙.
+// 슬라이스 레이어는 루트 index.ts(public API)로만 열어 내부 세그먼트 직접 참조를 막는다.
+const allowLowerLayers = (layer, index) => ({
+  from: { element: { type: layer.type } },
+  allow: {
+    to: FSD_LAYERS.slice(0, index).map((lower) => (isSliced(lower) ? { element: { type: lower.type, fileInternalPath: 'index.ts' } } : { element: { type: lower.type } }))
+  }
+});
 
-  return [
-    {
-      group: [...upperLayers.map((upper) => `@/${upper}/*`), ...sameLayer],
-      message: `${layer}는 자기보다 하위 레이어만 import한다. 같은 레이어의 다른 슬라이스도 직접 import할 수 없다.`
-    },
-    {
-      // 자기 레이어는 위 패턴이 이미 판정하므로 제외해 같은 import가 두 번 보고되지 않게 한다.
-      group: SLICED_LAYERS.filter((sliced) => sliced !== layer).map((sliced) => `@/${sliced}/*/*`),
-      message: '다른 슬라이스는 루트 index.ts(public API)로만 import한다. 내부 세그먼트 직접 참조 금지.'
-    }
-  ];
-};
+// 같은 레이어에서는 "자기 슬라이스"만 허용
+const allowOwnSlice = (layer) => ({
+  from: { element: { type: layer.type } },
+  allow: { to: { element: { type: layer.type, captured: { slice: '{{from.element.captured.slice}}' } } } }
+});
 
-const fsdLayerBoundaries = FSD_LAYERS.flatMap((layer) => {
-  const scopes = SLICED_LAYERS.includes(layer) ? readSlices(layer).map((slice) => ({ files: `src/${layer}/${slice}/**/*.{ts,tsx}`, ownSlice: slice })) : [{ files: `src/${layer}/**/*.{ts,tsx}`, ownSlice: null }];
+const fsdDependencyPolicies = FSD_LAYERS.flatMap((layer, index) => {
+  const policies = [];
 
-  return scopes.map(({ files, ownSlice }) => ({
-    files: [files],
-    rules: {
-      'no-restricted-imports': ['error', { patterns: restrictedPatterns(layer, ownSlice) }]
-    }
-  }));
+  if (index > 0) policies.push(allowLowerLayers(layer, index));
+  if (isSliced(layer)) policies.push(allowOwnSlice(layer));
+
+  return policies;
 });
 
 const eslintConfig = defineConfig([
@@ -131,7 +117,26 @@ const eslintConfig = defineConfig([
       '@typescript-eslint/no-floating-promises': 'warn'
     }
   },
-  ...fsdLayerBoundaries
+  {
+    // FSD 의존성 하네스. `default: 'disallow'`라 policies에 없는 방향은 전부 막힌다 —
+    // 새 레이어를 추가해도 명시적으로 열기 전까지는 차단 쪽으로 실패한다.
+    // 경로 문자열이 아니라 resolver가 해석한 실제 파일을 판정하므로 `@/` 별칭이든 `../../`든 동일하게 걸린다.
+    files: ['src/**/*.{ts,tsx}'],
+    plugins: { boundaries },
+    settings: {
+      'boundaries/elements': FSD_LAYERS
+    },
+    rules: {
+      'boundaries/dependencies': [
+        'error',
+        {
+          default: 'disallow',
+          message: 'FSD 의존 규칙 위반: 하위 레이어만, 다른 슬라이스는 루트 index.ts(public API)로만 import한다.',
+          policies: fsdDependencyPolicies
+        }
+      ]
+    }
+  }
 ]);
 
 export default eslintConfig;
