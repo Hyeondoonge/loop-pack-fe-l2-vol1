@@ -8,6 +8,23 @@ export default defineConfig({
     }
   },
   test: {
-    environment: 'node'
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          environment: 'node',
+          include: ['**/*.unit.test.*']
+        }
+      },
+      {
+        extends: true,
+        test: {
+          name: 'integration',
+          environment: 'jsdom',
+          include: ['**/*.integration.test.*']
+        }
+      }
+    ]
   }
 });
