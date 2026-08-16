@@ -16,5 +16,5 @@ function toSearchParams(query: ProductListQuery): string {
 // Route Handler를 절대 URL로 호출한다(week-05 direct-call 우회 폐기, docs/work/week-07/measurement-and-decisions.md 참고).
 // query는 toProductListQuery에서 정규화(q trim/소문자, page clamp)를 거친 값이다.
 export async function getProductList(query: ProductListQuery, signal?: AbortSignal): Promise<ProductListResponse> {
-  return apiFetch(`/api/products?${toSearchParams(query)}&scenario=slow`, { signal });
+  return apiFetch(`/api/products?${toSearchParams(query)}`, { signal });
 }
