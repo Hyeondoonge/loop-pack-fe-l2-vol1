@@ -13,7 +13,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest",
+    "test:watch": "vitest --project unit",
     "check": "pnpm test && pnpm lint && pnpm typecheck && pnpm build",
     "format": "prettier --write .",
     "prepare": "husky"
