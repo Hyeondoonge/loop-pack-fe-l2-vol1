@@ -17,7 +17,8 @@ export default defineConfig({
     // test:e2e를 단독 실행하면 직전 빌드를 쓰게 되는데, 정확성은 CI(check 전체 실행)에서 보장
     command: 'pnpm start',
     url: APP_ORIGIN,
-    reuseExistingServer: false,
+    // 로컬은 떠 있는 서버를 재사용해 빠른 실행, CI는 항상 프로덕션 기준 실행
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000
   }
 });
