@@ -9,6 +9,7 @@ export default defineConfig({
   },
   test: {
     setupFiles: ['./vitest.setup.ts'],
+    env: { APP_ORIGIN: 'http://localhost:3000' },
     projects: [
       {
         extends: true,
