@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
-import { server } from '@/shared/mocks/node';
+import { server } from '../../../mocks/node';
 import { ApiError, apiFetch } from './apiFetch';
 
 // /api/example은 실재하지 않는 경로다 — 이 테스트는 특정 라우트가 아니라 apiFetch의 계약만 검증

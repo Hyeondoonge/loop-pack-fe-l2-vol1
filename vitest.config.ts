@@ -24,7 +24,10 @@ export default defineConfig({
         test: {
           name: 'integration',
           environment: 'jsdom',
-          include: ['**/*.integration.test.*']
+          include: ['**/*.integration.test.*'],
+          // extends: true로 루트 setupFiles(MSW)가 이미 상속된다. 여기 다시 적으면 병합되어
+          // server.listen()이 두 번 불리고 msw가 "already enabled network"로 죽는다.
+          setupFiles: ['./vitest.setup.integration.ts']
         }
       }
     ]
