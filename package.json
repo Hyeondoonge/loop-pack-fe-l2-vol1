@@ -46,6 +46,7 @@
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/ui": "^4.1.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "eslint-plugin-boundaries": "^7.2.0",
