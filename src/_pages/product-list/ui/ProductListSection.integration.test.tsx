@@ -118,9 +118,10 @@ describe('필터 조작', () => {
   it('가격 낮은순을 고르면 화면 가격이 오름차순이고, 높은순으로 바꾸면 뒤집힌다', async () => {
     renderWithProviders(<ProductListSection />);
     await screen.findByRole('heading', { name: '데일리 코튼 티셔츠' });
+    const initialPrices = getVisiblePrices();
 
     await userEvent.selectOptions(screen.getByLabelText('정렬'), 'price-asc');
-    await waitFor(() => expect(screen.getByRole('heading', { name: '우드 디퓨저' })).toBeVisible());
+    await waitFor(() => expect(getVisiblePrices()).not.toEqual(initialPrices));
 
     const ascendingPrices = getVisiblePrices();
     // 카드가 한 장뿐이면 어떤 정렬이든 통과하므로 개수 하한을 함께 본다.
@@ -128,7 +129,7 @@ describe('필터 조작', () => {
     expect([...ascendingPrices].sort((left, right) => left - right)).toEqual(ascendingPrices);
 
     await userEvent.selectOptions(screen.getByLabelText('정렬'), 'price-desc');
-    await waitFor(() => expect(screen.getByRole('heading', { name: '오버핏 블레이저' })).toBeVisible());
+    await waitFor(() => expect(getVisiblePrices()).not.toEqual(ascendingPrices));
 
     const descendingPrices = getVisiblePrices();
     expect(descendingPrices.length).toBeGreaterThan(1);
