@@ -6,6 +6,7 @@ const APP_ORIGIN = 'http://localhost:3000';
 export default defineConfig({
   testDir: './e2e',
   forbidOnly: Boolean(process.env.CI),
+  reporter: process.env.CI ? [['list'], ['github']] : 'list',
   retries: 0,
   use: {
     baseURL: APP_ORIGIN,
