@@ -30,6 +30,15 @@ describe('목록 상태', () => {
     expect(await screen.findByText('검색 결과가 없습니다.')).toBeVisible();
   });
 
+  it('결과가 하나뿐이면 안내 문구가 아니라 상품 카드 한 장을 보여준다', async () => {
+    server.use(http.get(PRODUCT_LIST_ENDPOINT, () => HttpResponse.json(PRODUCT_LIST_STUBS.single)));
+    renderWithProviders(<ProductListSection />);
+
+    expect(await screen.findByRole('heading', { name: '데일리 코튼 티셔츠' })).toBeVisible();
+    expect(screen.queryByText('검색 결과가 없습니다.')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('article')).toHaveLength(1);
+  });
+
   it('빈 결과는 에러 화면으로 새지 않고 필터도 그대로 조작할 수 있다', async () => {
     server.use(http.get(PRODUCT_LIST_ENDPOINT, () => HttpResponse.json(PRODUCT_LIST_STUBS.empty)));
     renderWithProviders(<ProductListSection />);
@@ -161,6 +170,27 @@ describe('필터 조작', () => {
     expect(screen.getByRole('button', { name: '이전' })).toBeEnabled();
   });
 
+  it('필터를 바꿔 다시 불러오는 동안에는 이전 조건의 목록이 화면에 남는다', async () => {
+    renderWithProviders(<ProductListSection />);
+    await screen.findByRole('heading', { name: '오버핏 블레이저' });
+
+    server.use(
+      http.get(PRODUCT_LIST_ENDPOINT, async () => {
+        await delay(200);
+        return HttpResponse.json(PRODUCT_LIST_STUBS.casual);
+      })
+    );
+    await userEvent.selectOptions(screen.getByLabelText('카테고리'), 'casual');
+
+    // 새 결과가 오기 전 순간. 목록을 스켈레톤으로 갈아끼우지 않고 이전 결과를 남긴 채 갱신 중임만 알린다.
+    expect(screen.getByRole('heading', { name: '오버핏 블레이저' })).toBeVisible();
+    expect(getResultsRegion()).toHaveAttribute('aria-busy', 'true');
+
+    // 새 결과가 도착하면 이전 조건의 상품이 사라진다. 코튼 티셔츠는 두 조건에 모두 있어 판별에 못 쓴다.
+    await waitFor(() => expect(screen.queryByRole('heading', { name: '오버핏 블레이저' })).not.toBeInTheDocument());
+    expect(screen.getByRole('heading', { name: '데일리 코튼 티셔츠' })).toBeVisible();
+  });
+
   it('페이지를 넘긴 뒤 필터를 바꾸면 첫 페이지로 돌아간다', async () => {
     renderWithProviders(<ProductListSection />);
     await screen.findByRole('heading', { name: '데일리 코튼 티셔츠' });
@@ -248,6 +278,18 @@ describe('담기와 헤더 개수', () => {
 
     await userEvent.click(screen.getByRole('button', { name: '데일리 코튼 티셔츠 장바구니' }));
     expect(screen.getByText('장바구니 0')).toBeVisible();
+  });
+
+  it('담기 전에는 담기지 않은 상태로, 담은 뒤에는 담긴 상태로 표시된다', async () => {
+    renderListWithHeader();
+    await screen.findByRole('heading', { name: '데일리 코튼 티셔츠' });
+
+    const cartButton = screen.getByRole('button', { name: '데일리 코튼 티셔츠 장바구니' });
+    expect(cartButton).toHaveAttribute('aria-pressed', 'false');
+
+    await userEvent.click(cartButton);
+
+    expect(cartButton).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('서로 다른 상품을 담으면 개수가 쌓인다', async () => {

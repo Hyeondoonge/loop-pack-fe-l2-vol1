@@ -69,5 +69,7 @@ export const PRODUCT_LIST_STUBS = {
     products: [...casualOnly].sort((left, right) => right.price - left.price),
     totalCount: casualOnly.length
   }),
+  // 0개와 1개는 안내 문구가 갈리는 경계라 한 개짜리 응답을 따로 둔다.
+  single: createProductListResponse({ products: [COTTON_TEE], totalCount: 1 }),
   empty: createProductListResponse({ products: [], totalCount: 0 })
 };

@@ -54,6 +54,9 @@ test('페이지를 넘긴 상태에서 새로고침해도 같은 페이지에 �
 
   await page.getByRole('button', { name: '다음' }).click();
   await expect(page.getByText('2 /', { exact: false })).toBeVisible();
+  // 화면과 주소가 같은 페이지를 가리키는지 먼저 못 박는다. 새로고침 전후 비교만으로는 주소 표기가
+  // 통째로 어긋나도 양쪽이 같으면 통과한다.
+  await expect(page).toHaveURL(/[?&]page=2(&|$)/);
 
   const before = await captureListState(page);
   await page.reload();
