@@ -63,6 +63,7 @@ export const PRODUCT_LIST_STUBS = {
   secondPage: createProductListResponse({ products: ALL_PRODUCTS.slice(PRODUCT_PAGE_SIZE), page: 2 }),
   casual: createProductListResponse({ products: casualOnly, totalCount: casualOnly.length }),
   priceAscending: createProductListResponse({ products: byPriceAscending.slice(0, PRODUCT_PAGE_SIZE) }),
+  priceAscendingSecondPage: createProductListResponse({ products: byPriceAscending.slice(PRODUCT_PAGE_SIZE), page: 2 }),
   priceDescending: createProductListResponse({ products: byPriceDescending.slice(0, PRODUCT_PAGE_SIZE) }),
   casualPriceDescending: createProductListResponse({
     products: [...casualOnly].sort((left, right) => right.price - left.price),

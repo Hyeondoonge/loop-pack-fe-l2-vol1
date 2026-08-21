@@ -21,6 +21,7 @@ const RESPONSE_BY_CONDITION: Record<string, ProductListResponse> = {
   'q=&category=all&sort=latest&page=2': PRODUCT_LIST_STUBS.secondPage,
   'q=&category=casual&sort=latest&page=1': PRODUCT_LIST_STUBS.casual,
   'q=&category=all&sort=price-asc&page=1': PRODUCT_LIST_STUBS.priceAscending,
+  'q=&category=all&sort=price-asc&page=2': PRODUCT_LIST_STUBS.priceAscendingSecondPage,
   'q=&category=all&sort=price-desc&page=1': PRODUCT_LIST_STUBS.priceDescending,
   'q=&category=casual&sort=price-desc&page=1': PRODUCT_LIST_STUBS.casualPriceDescending
 };
