@@ -1,7 +1,24 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { getProductListData } from './getProductListData';
 
 const baseQuery = { q: '', category: null, sort: null, page: 1, pageSize: 12 } as const;
+
+function buildProduct(overrides: { id: string; rating: number; reviewCount: number }) {
+  return {
+    id: overrides.id,
+    brand: 'Loopers Select',
+    name: overrides.id,
+    category: 'casual' as const,
+    price: 1000,
+    originalPrice: null,
+    image: '',
+    freeShipping: false,
+    sizes: [],
+    rating: overrides.rating,
+    reviewCount: overrides.reviewCount,
+    createdAt: '2026-01-01T00:00:00.000Z'
+  };
+}
 
 describe('getProductListData', () => {
   it('paginates with totalCount over the full match set', () => {
@@ -20,11 +37,20 @@ describe('getProductListData', () => {
     expect(result.products[0].id).toBe('p26');
   });
 
-  it('sorts popular by rating when reviewCount is tied', () => {
-    const result = getProductListData({ ...baseQuery, sort: 'popular' });
-    const ids = result.products.map((product) => product.id);
+  it('sorts popular by rating when reviewCount is tied, even when input order needs a swap', async () => {
+    vi.resetModules();
+    vi.doMock('../_data/commerce', () => ({
+      categories: [],
+      products: [buildProduct({ id: 'low', rating: 4.0, reviewCount: 100 }), buildProduct({ id: 'high', rating: 4.9, reviewCount: 100 })]
+    }));
 
-    expect(ids.indexOf('p22')).toBeLessThan(ids.indexOf('p30'));
+    const { getProductListData: getProductListDataWithFixture } = await import('./getProductListData');
+    const result = getProductListDataWithFixture({ ...baseQuery, sort: 'popular' });
+
+    expect(result.products.map((product) => product.id)).toEqual(['high', 'low']);
+
+    vi.doUnmock('../_data/commerce');
+    vi.resetModules();
   });
 
   it('filters by category', () => {
