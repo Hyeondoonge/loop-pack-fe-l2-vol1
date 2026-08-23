@@ -16,3 +16,9 @@ describe('productListParsers.page', () => {
     expect(productListParsers.page.parse('abc')).toBeNull();
   });
 });
+
+describe('productListParsers.sort', () => {
+  it('defaults to latest', () => {
+    expect(productListParsers.sort.defaultValue).toBe('latest');
+  });
+});
