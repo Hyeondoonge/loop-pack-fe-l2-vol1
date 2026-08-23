@@ -21,6 +21,13 @@ describe('getHomeData', () => {
     expect(result.newProducts.map((product) => product.id)).toEqual(['p26', 'p6', 'p27', 'p24', 'p1', 'p28']);
   });
 
+  it('sorts popular products by rating when reviewCount is tied', () => {
+    const result = getHomeData();
+    const ids = result.popularProducts.map((product) => product.id);
+
+    expect(ids.indexOf('p22')).toBeLessThan(ids.indexOf('p30'));
+  });
+
   it('keeps banner and categories in the empty scenario', () => {
     const result = getHomeData('empty');
 
