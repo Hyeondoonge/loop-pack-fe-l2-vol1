@@ -20,6 +20,13 @@ describe('getProductListData', () => {
     expect(result.products[0].id).toBe('p26');
   });
 
+  it('sorts popular by rating when reviewCount is tied', () => {
+    const result = getProductListData({ ...baseQuery, sort: 'popular' });
+    const ids = result.products.map((product) => product.id);
+
+    expect(ids.indexOf('p22')).toBeLessThan(ids.indexOf('p30'));
+  });
+
   it('filters by category', () => {
     const result = getProductListData({ ...baseQuery, category: 'digital' });
 
