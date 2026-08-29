@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest --project unit",
-    "test:e2e": "playwright test --pass-with-no-tests",
+    "test:e2e": "playwright test",
     "test:mutation": "stryker run",
     "check": "pnpm test && pnpm lint && pnpm typecheck && pnpm build && pnpm test:e2e",
     "format": "prettier --write .",
