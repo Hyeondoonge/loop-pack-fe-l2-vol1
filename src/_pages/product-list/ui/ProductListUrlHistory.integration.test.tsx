@@ -3,7 +3,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithBrowserHistory } from '../../../../test/render';
+import { renderWithBrowserHistory } from '@/test/lib/render';
 import ProductListSection from './ProductListSection';
 
 // nuqs 기본 throttle이 jsdom에서 50ms다. 연속 조작이 이보다 빠르면 하나의 pushState로 합쳐져
