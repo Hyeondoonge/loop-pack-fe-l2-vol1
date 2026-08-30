@@ -17,6 +17,10 @@
 /.next/
 /out/
 
+# playwright
+/test-results/
+/playwright-report/
+
 # production
 /build
 
@@ -44,3 +48,7 @@ next-env.d.ts
 # Lighthouse raw JSON·트레이스·filmstrip·재현 스크린샷은 용량이 커서 원격에 올리지 않는다.
 # 측정으로 얻은 수치와 판정은 docs/work/week-07/ 본문 문서에 옮겨 적었다.
 docs/work/week-07/measurements/
+
+# stryker
+reports/
+.stryker-tmp/

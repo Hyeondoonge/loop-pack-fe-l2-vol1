@@ -12,6 +12,12 @@ describe('createIdSetStore', () => {
     expect(useStore.getState().ids.has('p1')).toBe(false);
   });
 
+  it('add는 없는 id를 추가한다', () => {
+    const useStore = createIdSetStore();
+    useStore.getState().add('p1');
+    expect(useStore.getState().ids.has('p1')).toBe(true);
+  });
+
   it('add는 이미 있는 id를 다시 넣어도 참조를 바꾸지 않는다', () => {
     const useStore = createIdSetStore();
     useStore.getState().add('p1');
@@ -19,6 +25,14 @@ describe('createIdSetStore', () => {
 
     useStore.getState().add('p1');
     expect(useStore.getState().ids).toBe(beforeRef);
+  });
+
+  it('remove는 있는 id를 제거한다', () => {
+    const useStore = createIdSetStore();
+    useStore.getState().add('p1');
+
+    useStore.getState().remove('p1');
+    expect(useStore.getState().ids.has('p1')).toBe(false);
   });
 
   it('remove는 없는 id를 지워도 참조를 바꾸지 않는다', () => {

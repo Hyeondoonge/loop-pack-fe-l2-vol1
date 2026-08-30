@@ -1,5 +1,22 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { getHomeData } from './getHomeData';
+
+function buildProduct(overrides: { id: string; rating: number; reviewCount: number }) {
+  return {
+    id: overrides.id,
+    brand: 'Loopers Select',
+    name: overrides.id,
+    category: 'casual' as const,
+    price: 1000,
+    originalPrice: null,
+    image: '',
+    freeShipping: false,
+    sizes: [],
+    rating: overrides.rating,
+    reviewCount: overrides.reviewCount,
+    createdAt: '2026-01-01T00:00:00.000Z'
+  };
+}
 
 describe('getHomeData', () => {
   it('returns banner, categories, popular products, and new products', () => {
@@ -19,6 +36,23 @@ describe('getHomeData', () => {
     ]);
     expect(result.popularProducts.map((product) => product.id)).toEqual(['p21', 'p11', 'p15', 'p8', 'p22', 'p30']);
     expect(result.newProducts.map((product) => product.id)).toEqual(['p26', 'p6', 'p27', 'p24', 'p1', 'p28']);
+  });
+
+  it('sorts popular products by rating when reviewCount is tied, even when input order needs a swap', async () => {
+    vi.resetModules();
+    vi.doMock('../_data/commerce', () => ({
+      categories: [],
+      homeBanner: { title: '', description: '', image: '' },
+      products: [buildProduct({ id: 'low', rating: 4.0, reviewCount: 100 }), buildProduct({ id: 'high', rating: 4.9, reviewCount: 100 })]
+    }));
+
+    const { getHomeData: getHomeDataWithFixture } = await import('./getHomeData');
+    const result = getHomeDataWithFixture();
+
+    expect(result.popularProducts.map((product) => product.id)).toEqual(['high', 'low']);
+
+    vi.doUnmock('../_data/commerce');
+    vi.resetModules();
   });
 
   it('keeps banner and categories in the empty scenario', () => {

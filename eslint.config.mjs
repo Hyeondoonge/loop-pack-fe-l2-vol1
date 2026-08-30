@@ -98,6 +98,11 @@ const eslintConfig = defineConfig([
         {
           selector: 'FunctionDeclaration[id.name=/^on[A-Z]/]',
           message: '핸들러 함수는 handleXXX로 명명하세요. onXXX는 props 전달용으로 예약되어 있습니다.'
+        },
+        // 테스트에서 HTTP 클라이언트를 직접 바꿔치기하지 않음 — 요청은 실제로 나가고 MSW가 가로채는 구조 유지
+        {
+          selector: "CallExpression[callee.object.name='vi'] > Literal[value='fetch']",
+          message: 'fetch를 직접 바꿔치기하지 마세요. MSW 핸들러(server.use)로 응답을 정의하면 요청이 실제로 나가고 MSW가 가로챕니다.'
         }
       ]
     }

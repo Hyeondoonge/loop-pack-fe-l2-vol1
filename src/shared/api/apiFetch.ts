@@ -9,7 +9,6 @@ export class ApiError extends Error {
     message: string
   ) {
     super(message);
-    this.name = 'ApiError';
   }
 }
 
