@@ -3,7 +3,6 @@ import type { ReactElement, ReactNode } from 'react';
 import { render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NuqsTestingAdapter, type OnUrlUpdateFunction } from 'nuqs/adapters/testing';
-import { NuqsAdapter } from 'nuqs/adapters/react';
 
 // 재시도 정책 자체는 운영 값을 그대로 쓰고 대기 시간만 없앤다. retry: false로 끄면
 // "5xx는 1회 재시도한다"를 바꾸는 변형을 테스트가 못 잡는다(결정 4).
@@ -27,21 +26,6 @@ export function renderWithProviders(ui: ReactElement, { searchParams, onUrlUpdat
       <NuqsTestingAdapter searchParams={searchParams} onUrlUpdate={onUrlUpdate} hasMemory>
         <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
       </NuqsTestingAdapter>
-    );
-  }
-
-  return render(ui, { wrapper: Providers });
-}
-
-// 뒤로·앞으로 항목 전용. 테스트 어댑터는 history·location을 건드리지 않아 세션 히스토리 자체가 없다.
-// nuqs/adapters/react는 history.pushState와 popstate 구독을 쓰는 운영과 같은 경로이고,
-// jsdom이 그 경로를 whatwg-html 스펙대로 구현한다(docs/work/week-08/back-forward-test-design.md).
-export function renderWithBrowserHistory(ui: ReactElement) {
-  function Providers({ children }: { children: ReactNode }) {
-    return (
-      <NuqsAdapter>
-        <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
-      </NuqsAdapter>
     );
   }
 
