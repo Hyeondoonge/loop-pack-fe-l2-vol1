@@ -162,6 +162,60 @@
   }
 }
 
+/* 로그인 폼 */
+.login-page {
+  display: grid;
+  justify-items: center;
+  gap: 24px;
+}
+
+.login-page h1 {
+  text-align: center;
+}
+
+.login-form {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+  max-width: 360px;
+  padding: 32px 28px;
+  border: 1px solid #c8c8c8;
+}
+
+.login-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.login-form input {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #c8c8c8;
+  background: transparent;
+  color: inherit;
+}
+
+.login-form [role='alert'] {
+  margin: 0;
+  color: #000;
+  font-weight: 600;
+}
+
+.login-form button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #000;
+  background: #000;
+  color: #fff;
+  font-weight: 600;
+}
+
+.login-form button:disabled {
+  border-color: #c8c8c8;
+  background: #c8c8c8;
+  color: #666;
+}
+
 /* 목록 pending 폴백과 갱신 표시 (week-07 2단계) */
 
 /* 카테고리 옵션은 서버 응답으로 채워진다. select 폭은 가장 긴 옵션이 정하므로 데이터가 도착하는

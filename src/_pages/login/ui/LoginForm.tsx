@@ -41,7 +41,7 @@ export default function LoginForm() {
   const errorMessage = loginMutation.error instanceof ApiError ? loginMutation.error.message : loginMutation.isError ? '로그인하지 못했습니다.' : '';
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="login-form" onSubmit={handleSubmit}>
       <label>
         이메일
         <input name="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
