@@ -3,12 +3,16 @@
 'use client';
 
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { authQueries } from '@/entities/auth';
 import { useCartStore } from '@/entities/cart';
 import { useWishlistStore } from '@/entities/wishlist';
 
 export default function Header() {
   const wishlistCount = useWishlistStore((state) => state.ids.size);
   const cartCount = useCartStore((state) => state.ids.size);
+
+  const { data: user } = useQuery(authQueries.me());
 
   return (
     <div className="site-header">
@@ -18,6 +22,7 @@ export default function Header() {
           <Link href="/products">상품</Link>
           <span>위시리스트 {wishlistCount}</span>
           <span>장바구니 {cartCount}</span>
+          {user ? <span>{user.name}님</span> : <Link href="/login">로그인</Link>}
         </nav>
       </header>
     </div>

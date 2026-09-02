@@ -7,8 +7,6 @@ import './styles/commerce.css';
 import Providers from './providers';
 import { Header } from '@/widgets/header';
 import { authQueries } from '@/entities/auth';
-import { readSessionToken } from '../../app/api/_data/auth';
-import { SESSION_COOKIE } from '../../app/api/_data/auth-cookies';
 import { getQueryClient } from '@/shared/api/getQueryClient';
 import { commonOpenGraph, OG_FALLBACK_IMAGE, SITE_DESCRIPTION, SITE_NAME } from '@/shared/config/siteMetadata';
 
@@ -39,9 +37,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = readSessionToken((await cookies()).get(SESSION_COOKIE)?.value);
   const queryClient = getQueryClient();
-  queryClient.setQueryData(authQueries.me().queryKey, user);
+  await queryClient.prefetchQuery(authQueries.me((await cookies()).toString()));
 
   return (
     <html lang="ko" className={`${geistSans.variable} ${geistMono.variable}`}>

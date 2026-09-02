@@ -8,7 +8,6 @@ export const authQueries = {
   me: (cookieHeader?: string) =>
     queryOptions({
       queryKey: [...authQueries.all(), 'me'],
-      queryFn: () => getMe(cookieHeader),
-      staleTime: 0
+      queryFn: () => getMe(cookieHeader)
     })
 };
