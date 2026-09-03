@@ -8,7 +8,7 @@ interface CartToggleButtonProps {
 }
 
 export default function CartToggleButton({ productId, productLabel }: CartToggleButtonProps) {
-  const isInCart = useCartStore((state) => state.ids.has(productId));
+  const isInCart = useCartStore((state) => state.items.has(productId));
   const toggleCart = useCartStore((state) => state.toggle);
 
   return (

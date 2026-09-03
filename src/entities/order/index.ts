@@ -1,2 +1,3 @@
 export { orderQueries } from './api/orderQueries';
-export type { Order, OrderItem, OrderListResponse } from './model/types';
+export { createOrder } from './api/createOrder';
+export type { Order, OrderItem, OrderListResponse, OrderCreateRequest } from './model/types';

@@ -8,7 +8,8 @@ import { useWishlistStore } from '@/entities/wishlist';
 
 // 모듈 최상위에서 만들어지는 전역 스토어 격리
 afterEach(() => {
-  useCartStore.setState({ ids: new Set() });
+  // 장바구니는 수량을 갖는 Map, 위시리스트는 ID Set이다.
+  useCartStore.setState({ items: new Map() });
   useWishlistStore.setState({ ids: new Set() });
 });
 

@@ -10,7 +10,8 @@ import { useWishlistStore } from '@/entities/wishlist';
 
 export default function Header() {
   const wishlistCount = useWishlistStore((state) => state.ids.size);
-  const cartCount = useCartStore((state) => state.ids.size);
+  // 총 수량이 아니라 품목 수다. 수량을 올려도 헤더 숫자는 그대로다 — 커머스 헤더의 통상 표기.
+  const cartCount = useCartStore((state) => state.items.size);
   const queryClient = useQueryClient();
 
   const { data: user } = useQuery(authQueries.me());
@@ -27,11 +28,13 @@ export default function Header() {
         <Link href="/">Commerce</Link>
         <nav aria-label="주요 메뉴">
           <Link href="/products">상품</Link>
-          <span>위시리스트 {wishlistCount}</span>
-          <span>장바구니 {cartCount}</span>
+          <Link href="/wishlist">위시리스트 {wishlistCount}</Link>
+          <Link href="/cart">장바구니 {cartCount}</Link>
           {user ? (
             <>
-              <span>{user.name}님</span>
+              <Link href="/mypage" aria-label={`${user.name}님 마이페이지`}>
+                {user.name}님
+              </Link>
               <button type="button" disabled={logoutMutation.isPending} onClick={() => logoutMutation.mutate()}>
                 로그아웃
               </button>

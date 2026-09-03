@@ -14,3 +14,11 @@ export type Order = {
 export type OrderListResponse = {
   orders: Order[];
 };
+
+export type OrderCreateRequest = {
+  items: OrderItem[];
+};
+
+export type OrderCreateResponse = {
+  order: Order;
+};
