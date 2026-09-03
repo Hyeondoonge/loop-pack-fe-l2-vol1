@@ -3,16 +3,23 @@
 'use client';
 
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
-import { authQueries } from '@/entities/auth';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { authQueries, logout } from '@/entities/auth';
 import { useCartStore } from '@/entities/cart';
 import { useWishlistStore } from '@/entities/wishlist';
 
 export default function Header() {
   const wishlistCount = useWishlistStore((state) => state.ids.size);
   const cartCount = useCartStore((state) => state.ids.size);
+  const queryClient = useQueryClient();
 
   const { data: user } = useQuery(authQueries.me());
+  // 로그아웃이 지우는 건 세션 캐시(['auth']) 하나뿐이다. cart·wishlist는 계정 없이도
+  // 성립하는 클라이언트 상태라 건드리지 않는다(01-auth-guard-design.md 3번 결정).
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: authQueries.all() })
+  });
 
   return (
     <div className="site-header">
@@ -22,7 +29,16 @@ export default function Header() {
           <Link href="/products">상품</Link>
           <span>위시리스트 {wishlistCount}</span>
           <span>장바구니 {cartCount}</span>
-          {user ? <span>{user.name}님</span> : <Link href="/login">로그인</Link>}
+          {user ? (
+            <>
+              <span>{user.name}님</span>
+              <button type="button" disabled={logoutMutation.isPending} onClick={() => logoutMutation.mutate()}>
+                로그아웃
+              </button>
+            </>
+          ) : (
+            <Link href="/login">로그인</Link>
+          )}
         </nav>
       </header>
     </div>
