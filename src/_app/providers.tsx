@@ -20,7 +20,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
-        defaultOptions: { queries: { staleTime: 20 * 1000 } },
+        defaultOptions: {
+          // 세션 만료는 재시도해도 응답이 바뀌지 않는다 — 재시도 없이 바로 onError로 보낸다.
+          queries: { staleTime: 20 * 1000, retry: (failureCount, error) => !(error instanceof SessionExpiredError) && failureCount < 3 }
+        },
         queryCache: new QueryCache({ onError: handleSessionExpired }),
         mutationCache: new MutationCache({ onError: handleSessionExpired })
       })

@@ -82,9 +82,8 @@ export default function CartSection() {
         </p>
 
         <div className="order-submit">
-          {/* 비보호 화면에서 보호 화면(주문서)으로 넘어가는 실제 경로.
-              미로그인 상태로 누르면 proxy.ts가 로그인으로 보냈다가 주문서로 되돌려 보낸다. */}
-          <Link className="primary-action" href="/orders/new">
+          {/* prefetch=false: 안 끄면 로그인 후에도 캐시된 리다이렉트 때문에 /login에 머문다 (vercel/next.js#88937, 미해결) */}
+          <Link className="primary-action" href="/orders/new" prefetch={false}>
             주문하기
           </Link>
         </div>
