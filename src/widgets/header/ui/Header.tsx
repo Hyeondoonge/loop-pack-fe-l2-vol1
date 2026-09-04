@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { authQueries, logout } from '@/entities/auth';
 import { useCartStore } from '@/entities/cart';
 import { useWishlistStore } from '@/entities/wishlist';
+import { reset } from '@/analytics/logger';
 
 export default function Header() {
   const wishlistCount = useWishlistStore((state) => state.ids.size);
@@ -19,7 +20,11 @@ export default function Header() {
   // 성립하는 클라이언트 상태라 건드리지 않는다(01-auth-guard-design.md 3번 결정).
   const logoutMutation = useMutation({
     mutationFn: logout,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: authQueries.all() })
+    onSuccess: () => {
+      // 5-a 결정: 사용자 액션 기준. 만료에는 reset()을 부르지 않는다(한 탭 = 한 세션의 흐름 유지).
+      reset();
+      void queryClient.invalidateQueries({ queryKey: authQueries.all() });
+    }
   });
 
   return (

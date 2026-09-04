@@ -3,8 +3,13 @@
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SessionExpiredError } from '@/shared/api/SessionExpiredError';
+// 5-c 결정: initAnalytics()는 여기서 부른다. 등록(registerProviders·setCommonProperties)은
+// './setup' 모듈 로드 시점에 이미 끝나 있어(analytics/setup.ts), 여기서는 프로바이더
+// 초기화와 큐 플러시만 하면 된다. 별도 컴포넌트를 두지 않는다 — 이미 있는 최상위 client
+// 경계(Providers) 하나로 충분하다.
+import { initAnalytics } from '@/analytics/logger';
 import { redirectToLogin } from './redirectToLogin';
 
 const handleSessionExpired = (error: unknown): void => {
@@ -20,6 +25,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         mutationCache: new MutationCache({ onError: handleSessionExpired })
       })
   );
+
+  useEffect(() => {
+    void initAnalytics();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

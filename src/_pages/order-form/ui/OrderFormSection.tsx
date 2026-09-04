@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { ApiError } from '@/shared/api/apiFetch';
 import { formatPrice } from '@/shared/lib/formatPrice';
 import { useCartStore } from '@/entities/cart';
 import { createOrder, orderQueries } from '@/entities/order';
 import { productCatalogQueries } from '@/entities/product';
+import { authQueries } from '@/entities/auth';
+import { trackOrderComplete } from '@/analytics/events';
 import { OrderLine } from '@/widgets/order-line';
 
 export default function OrderFormSection() {
@@ -16,10 +18,19 @@ export default function OrderFormSection() {
   const cartItems = useCartStore((state) => state.items);
   const removeFromCart = useCartStore((state) => state.remove);
   const { data: catalog } = useSuspenseQuery(productCatalogQueries.lookup());
+  const { data: user } = useQuery(authQueries.me());
 
   const orderMutation = useMutation({
     mutationFn: createOrder,
     onSuccess: (_order, request) => {
+      if (user) {
+        // 주문 API는 금액을 안 주므로(과제 39번 줄) 카탈로그 가격으로 직접 계산한다.
+        const orderTotalPrice = request.items.reduce((sum, { productId, quantity }) => {
+          const product = catalog[productId];
+          return sum + (product ? product.price * quantity : 0);
+        }, 0);
+        trackOrderComplete({ productIds: request.items.map((item) => item.productId), totalPrice: orderTotalPrice, userId: user.id });
+      }
       // 주문된 상품만 장바구니에서 뺀다. 지금은 장바구니 전체를 주문하므로 결과적으로 비워지지만,
       // 기준을 "주문에 담겨 나간 항목"으로 두면 나중에 일부만 주문하게 되어도 그대로 맞는다.
       // 성공했을 때만 뺀다 — 실패한 주문이 장바구니를 지우면 사용자가 담은 것을 잃는다.
