@@ -54,6 +54,97 @@ test.describe('로그인 검증 자체는 로그인 상태로 시작하지 않�
   });
 });
 
+test.describe('로그아웃 후 계정 데이터가 정리된다', () => {
+  // storageState를 비우지 않는다 — 이 테스트는 로그인 흐름을 검증 대상으로 삼지 않으므로
+  // fixtures.ts의 기본값(workerStorageState)을 그대로 써서 이미 로그인된 상태로 시작한다.
+  test('주문 내역 화면에서 로그아웃하면 화면에 남아있던 주문이 사라진다', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: '로그아웃' })).toBeVisible();
+
+    const cartButton = firstUncartedButton(page);
+    await cartButton.click();
+    await page.getByRole('link', { name: '장바구니' }).click();
+    await page.getByRole('link', { name: '주문하기' }).click();
+    await expect(page).toHaveURL('/orders/new');
+    await page.getByRole('button', { name: /주문하기$/ }).click();
+    await expect(page).toHaveURL('/orders');
+    await expect(page.locator('.order-card').first()).toBeVisible();
+
+    // 주문 내역 화면에 머문 채 로그아웃한다.
+    await page.getByRole('button', { name: '로그아웃' }).click();
+
+    await expect(page.getByRole('link', { name: '로그인' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '로그아웃' })).toHaveCount(0);
+    await expect(page).toHaveURL('/');
+  });
+});
+
+test.describe('계정을 바꿔 로그인하면 이전 계정의 주문이 보이지 않는다', () => {
+  // 두 계정을 직접 지정해야 하므로 워커 계정(fixtures.ts 기본값)을 쓰지 않고 미로그인으로 시작한다.
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('계정 A로 주문 내역을 본 뒤 계정 B로 로그인하면 A의 주문번호가 화면에 없다', async ({ page }) => {
+    // --- 계정 A: 주문을 하나 만들고 주문 내역까지 본다 ---
+    await page.goto('/login');
+    await page.getByLabel('이메일').fill('looper1@loopers.dev');
+    await page.getByLabel('비밀번호').fill('looper1234');
+    await page.getByRole('button', { name: '로그인' }).click();
+    await expect(page).toHaveURL('/');
+
+    await firstUncartedButton(page).click();
+    await page.getByRole('link', { name: '장바구니' }).click();
+    await page.getByRole('link', { name: '주문하기' }).click();
+    await expect(page).toHaveURL('/orders/new');
+    await page.getByRole('button', { name: /주문하기$/ }).click();
+    await expect(page).toHaveURL('/orders');
+
+    // 최근 주문이 맨 위에 온다(OrderHistorySection). 방금 만든 A의 주문번호를 기억해 둔다 —
+    // 목록이 비었는지가 아니라 "A의 그 주문"이 B에게 보이는지를 봐야 하기 때문이다.
+    // B에게 자기 주문이 있어도 이 단언은 그대로 성립한다.
+    const orderNumberOfA = await page
+      .getByText(/^주문번호 /)
+      .first()
+      .textContent();
+    if (orderNumberOfA === null) throw new Error('A의 주문번호를 읽지 못했다');
+
+    // --- 계정 B로 갈아탄다 ---
+    await page.getByRole('button', { name: '로그아웃' }).click();
+    await page.getByRole('link', { name: '로그인' }).click();
+
+    await expect(page).toHaveURL(/\/login/);
+    await page.getByLabel('이메일').fill('looper2@loopers.dev');
+    await page.getByLabel('비밀번호').fill('looper1234');
+    await page.getByRole('button', { name: '로그인' }).click();
+    await expect(page.getByRole('link', { name: /마이페이지$/ })).toBeVisible();
+
+    let releaseOrders: () => void = () => {};
+    const ordersHeld = new Promise<void>((resolve) => {
+      releaseOrders = () => resolve();
+    });
+    await page.route('**/api/orders', async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.continue();
+        return;
+      }
+      await ordersHeld;
+      await route.continue();
+    });
+
+    await page.getByRole('link', { name: /마이페이지$/ }).click();
+    await page.getByRole('link', { name: '주문 내역 보러 가기' }).click();
+    await expect(page).toHaveURL('/orders');
+
+    // 조회 중인 동안 A의 주문이 B의 화면에 있으면 안 된다.
+    await expect(page.getByText(orderNumberOfA, { exact: true })).toHaveCount(0);
+    await expect(page.locator('.order-card-skeleton')).toBeVisible();
+
+    // 응답을 풀어 최종 상태까지 확인한다.
+    releaseOrders();
+    await expect(page.locator('.order-card-skeleton')).toHaveCount(0);
+    await expect(page.getByText(orderNumberOfA, { exact: true })).toHaveCount(0);
+  });
+});
+
 test('세션이 만료되면 보호 경로에서 로그인 화면으로 안내된다', async ({ page, context }) => {
   // 만료를 시간으로 재현하지 않는다(과제 42번 줄). GET /api/auth/me · /api/orders에
   // 항상 401을 주는 시나리오 쿠키를 심는다. 쿼리로는 못 붙인다 — 앱 내부 호출이라(과제 59번 줄).

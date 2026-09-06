@@ -4,7 +4,6 @@ import { test as base, expect } from '@playwright/test';
 import { APP_ORIGIN } from '../playwright.config';
 
 // playwright.dev/docs/auth "Authenticate in a worker fixture" 레시피 그대로.
-// 계정 자체가 서버 상태를 나눠 갖지 않으므로(이번 주 테스트는 주문을 만들지 않는다)
 // account를 나누는 목적은 데이터 충돌이 아니라 워커끼리 같은 세션을 밟지 않게 하는 것이다.
 export const test = base.extend<object, { account: { email: string; password: string }; workerStorageState: string }>({
   account: [({}, provide, { parallelIndex }) => provide({ email: `looper${(parallelIndex % 8) + 1}@loopers.dev`, password: 'looper1234' }), { scope: 'worker' }],

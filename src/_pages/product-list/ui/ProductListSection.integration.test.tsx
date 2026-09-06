@@ -9,6 +9,10 @@ import { PRODUCT_LIST_STUBS } from '../mock/products';
 import ProductListSection from './ProductListSection';
 import { Header } from '@/widgets/header';
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: vi.fn() })
+}));
+
 function getResultsRegion() {
   return screen.getByRole('region', { name: '상품 검색 결과' });
 }

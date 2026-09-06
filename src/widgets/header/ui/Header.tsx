@@ -3,27 +3,32 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { authQueries, logout } from '@/entities/auth';
+import { orderQueries } from '@/entities/order';
 import { useCartStore } from '@/entities/cart';
 import { useWishlistStore } from '@/entities/wishlist';
 import { reset } from '@/analytics/logger';
 
 export default function Header() {
+  const router = useRouter();
   const wishlistCount = useWishlistStore((state) => state.ids.size);
   // 총 수량이 아니라 품목 수다. 수량을 올려도 헤더 숫자는 그대로다 — 커머스 헤더의 통상 표기.
   const cartCount = useCartStore((state) => state.items.size);
   const queryClient = useQueryClient();
 
   const { data: user } = useQuery(authQueries.me());
-  // 로그아웃이 지우는 건 세션 캐시(['auth']) 하나뿐이다. cart·wishlist는 계정 없이도
-  // 성립하는 클라이언트 상태라 건드리지 않는다(01-auth-guard-design.md 3번 결정).
+  // 로그아웃이 지우는 건 세션 캐시(['auth'])와 주문 캐시(['orders']) 둘이다. cart·wishlist는
+  // 계정 없이도 성립하는 클라이언트 상태라 건드리지 않는다(01-auth-guard-design.md 3번 결정).
   const logoutMutation = useMutation({
     mutationFn: logout,
     onSuccess: () => {
       // 5-a 결정: 사용자 액션 기준. 만료에는 reset()을 부르지 않는다(한 탭 = 한 세션의 흐름 유지).
       reset();
-      void queryClient.invalidateQueries({ queryKey: authQueries.all() });
+      void queryClient.resetQueries({ queryKey: authQueries.all() });
+      queryClient.removeQueries({ queryKey: orderQueries.all() });
+      router.replace('/');
     }
   });
 
