@@ -29,6 +29,9 @@ export default function Header() {
       void queryClient.resetQueries({ queryKey: authQueries.all() });
       queryClient.removeQueries({ queryKey: orderQueries.all() });
       router.replace('/');
+    },
+    onError: () => {
+      window.alert('로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     }
   });
 
