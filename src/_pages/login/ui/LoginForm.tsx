@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authQueries } from '@/entities/auth';
+import { orderQueries } from '@/entities/order';
 import { ApiError } from '@/shared/api/apiFetch';
 import { identify } from '@/analytics/logger';
 import { trackLoginFail, trackLoginStart, trackLoginSuccess, type LoginFailReason } from '@/analytics/events';
 import { resolveLoginDestination } from '../lib/resolveLoginDestination';
 import { login } from '../api/login';
 
-// 05-step2-design.md 질문 4 — 시드는 INVALID_CREDENTIALS 하나뿐이지만 400·5xx·네트워크
 // 실패를 뭉치면 3단계에서 "무엇을 실패로 셌는지"를 밝힐 수 없어 원인별로 나눈다.
 function resolveLoginFailReason(error: unknown): LoginFailReason {
   if (!(error instanceof ApiError)) return 'NETWORK_ERROR';
@@ -36,7 +36,10 @@ export default function LoginForm() {
   const nextParam = searchParams.get('next');
   const from = nextParam !== null && nextParam !== '' ? new URL(nextParam, 'http://localhost').pathname : null;
 
+  const hasTrackedLoginStart = useRef(false);
   useEffect(() => {
+    if (hasTrackedLoginStart.current) return;
+    hasTrackedLoginStart.current = true;
     trackLoginStart(from);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 마운트 시점의 from 하나만 본다. 재실행은 불필요하다.
   }, []);
@@ -48,7 +51,8 @@ export default function LoginForm() {
       const session = await loginMutation.mutateAsync({ email, password });
       trackLoginSuccess({ from, userId: session.user.id });
       identify(session.user.id);
-      void queryClient.invalidateQueries({ queryKey: authQueries.all() });
+      void queryClient.resetQueries({ queryKey: authQueries.all() });
+      queryClient.removeQueries({ queryKey: orderQueries.all() });
       //  로그인 화면은 스토리에 남지 않는다
       router.replace(resolveLoginDestination(nextParam, window.location.origin));
     } catch (error) {
