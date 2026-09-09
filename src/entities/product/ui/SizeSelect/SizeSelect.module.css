@@ -1,0 +1,67 @@
+/* 사이즈 전용 스타일 — 품절 비활성 처리 + 큰 행 높이.
+   chevron 회전은 [data-open] 상태 셀렉터로만 분기(JS 분기 없음). */
+
+.box {
+  border: 1px solid #d6dbe1;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.list {
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.row {
+  padding: 22px 16px;
+  cursor: pointer;
+  background: transparent;
+}
+.row + .row {
+  border-top: 1px solid #eef0f2;
+}
+.row.highlighted {
+  background: #f3f5f7;
+}
+.row.disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+.soldOut {
+  color: #c3c9d1;
+  font-size: 13px;
+}
+.delivery {
+  color: #2f6fed;
+  font-size: 13px;
+}
+
+.trigger {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: none;
+  border-bottom: 1px solid #eceef1;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  background: none;
+}
+.placeholder {
+  color: #8794a3;
+}
+.chevron {
+  display: inline-block;
+  font-size: 20px;
+  color: #c3c9d1;
+  transition:
+    transform 0.15s ease,
+    color 0.15s ease;
+}
+[data-open='true'] .chevron {
+  transform: rotate(180deg);
+  color: #5b6673;
+}

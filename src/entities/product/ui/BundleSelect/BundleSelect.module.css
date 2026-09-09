@@ -1,0 +1,70 @@
+/* 번들(텍스트) 전용 스타일 — box/list/row + trigger/chevron을 이 모듈이 완결 소유.
+   chevron 회전은 Select가 root에 부여한 [data-open] 상태 셀렉터로만 분기(JS 분기 없음). */
+
+.box {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.list {
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.row {
+  padding: 16px;
+  cursor: pointer;
+  background: transparent;
+}
+.row + .row {
+  border-top: 1px solid #eef0f2;
+}
+.row.highlighted {
+  background: #f3f5f7;
+}
+.rowTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.freeShipping {
+  border: 1px solid #ff6b35;
+  color: #ff6b35;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+}
+.priceLine {
+  margin-top: 6px;
+}
+.unitPrice {
+  color: #ff6b35;
+}
+
+.trigger {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  background: #f5f6f7;
+  font-weight: 700;
+}
+.chevron {
+  display: inline-block;
+  font-size: 15px;
+  color: #9aa3af;
+  transition:
+    transform 0.15s ease,
+    color 0.15s ease;
+}
+[data-open='true'] .chevron {
+  transform: rotate(180deg);
+  color: #111827;
+}

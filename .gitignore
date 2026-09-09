@@ -1,6 +1,8 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
 # dependencies
-node_modules/
-.pnp
+/node_modules
+/.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -8,27 +10,45 @@ node_modules/
 !.yarn/releases
 !.yarn/versions
 
-# build / output
-dist/
-build/
-.next/
-out/
-*.tsbuildinfo
+# testing
+/coverage
 
-# env
-.env
-.env.local
-.env.*.local
+# next.js
+/.next/
+/out/
 
-# test / coverage
-coverage/
+# playwright
+/test-results/
+/playwright-report/
 
-# logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+# production
+/build
 
 # misc
 .DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# 7주차 성능 측정 원본 자산 — 로컬 기록용으로만 보관한다.
+# Lighthouse raw JSON·트레이스·filmstrip·재현 스크린샷은 용량이 커서 원격에 올리지 않는다.
+# 측정으로 얻은 수치와 판정은 docs/work/week-07/ 본문 문서에 옮겨 적었다.
+docs/work/week-07/measurements/
+
+# stryker
+reports/
+.stryker-tmp/
