@@ -20,8 +20,16 @@ const geistMono = Geist_Mono({
   subsets: ['latin']
 });
 
+function requireAppOrigin(): string {
+  const origin = process.env.APP_ORIGIN;
+  if (!origin) {
+    throw new Error('APP_ORIGIN이 설정되지 않았습니다.');
+  }
+  return origin;
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.APP_ORIGIN ?? 'http://localhost:3000'),
+  metadataBase: new URL(requireAppOrigin()),
   title: { default: SITE_NAME, template: `%s | ${SITE_NAME}` },
   description: SITE_DESCRIPTION,
   openGraph: {
