@@ -2,6 +2,7 @@
 
 - 대상: `docs/assignments/week-10-quests.md` 2번(86~~116번 줄) GitHub Actions CI 보강, 4번(137~~152번 줄) 품질 게이트 정의
 - 선행 결정: [03-branch-release-flow.md](./03-branch-release-flow.md) — 어느 브랜치에 게이트를 걸지가 거기서 정해진다
+- 검증 기록: [05-gate-blocking-verification.md](./05-gate-blocking-verification.md) — 여기서 정한 게이트가 실제로 막는지 확인한 결과
 - 이 문서가 다루는 범위: **어떤 검증을 어느 브랜치 어느 시점에 두고 무엇을 required로 할지, CI job을 어떻게 나눌지까지.** 각 결정에 채택하지 않은 선택지와 그 이유를 함께 적었다.
 - 상태: **결정 확정, 워크플로 반영 완료** (2026-09-10 작성 / 2026-09-11 파라미터 추가·구현). `14f1ac9c`(job 분리)와 `58ab4974`(`.env` 추적 제거)로 반영했고 PR #5에서 두 job 모두 통과했다. branch protection의 required 지정은 아직 남아 있다. 폰트 조치는 Docker 단계까지 보류.
 
