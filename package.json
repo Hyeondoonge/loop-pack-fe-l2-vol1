@@ -12,6 +12,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "validate-env": "node scripts/validate-env.ts",
     "test": "vitest run",
     "test:watch": "vitest --project unit",
     "test:e2e": "playwright test",
