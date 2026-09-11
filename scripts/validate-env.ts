@@ -29,20 +29,12 @@ console.log(`[validate-env] APP_ORIGIN 검증 통과: ${APP_ORIGIN}`);
 // NEXT_PUBLIC_ 값은 빌드 시점에 브라우저 번들에 인라인된다. 노출해도 되는 이름만 여기에 추가한다.
 const ALLOWED_PUBLIC_ENV = new Set<string>([]);
 
-// Vercel Next.js 빌더가 빌드마다 자동 주입하는 이름 (vercel/vercel packages/build-utils/src/get-prefixed-env-vars.ts)
-const VERCEL_INJECTED_PUBLIC_ENV = new Set([
-  'NEXT_PUBLIC_VERCEL_URL',
-  'NEXT_PUBLIC_VERCEL_ENV',
-  'NEXT_PUBLIC_VERCEL_TARGET_ENV',
-  'NEXT_PUBLIC_VERCEL_REGION',
-  'NEXT_PUBLIC_VERCEL_BRANCH_URL',
-  'NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL',
-  'NEXT_PUBLIC_VERCEL_DEPLOYMENT_ID',
-  'NEXT_PUBLIC_VERCEL_PROJECT_ID'
-]);
-const VERCEL_INJECTED_PUBLIC_ENV_PREFIX = 'NEXT_PUBLIC_VERCEL_GIT_';
+// Vercel 빌드 환경이 주입하는 이름은 접두사 전체를 플랫폼 예약으로 본다.
+// 공개 소스(build-utils get-prefixed-env-vars.ts)에 없는 NEXT_PUBLIC_VERCEL_OBSERVABILITY_CLIENT_CONFIG도 주입돼 이름 단위 목록은 빌드를 깨뜨렸다.
+// ponytail: 이 접두사로 직접 등록한 비밀값은 통과한다. 막아야 하면 Vercel 대시보드 등록 이름을 별도로 검사한다.
+const VERCEL_RESERVED_PUBLIC_ENV_PREFIX = 'NEXT_PUBLIC_VERCEL_';
 
-const disallowedPublicEnv = Object.keys(process.env).filter((name) => name.startsWith('NEXT_PUBLIC_') && !ALLOWED_PUBLIC_ENV.has(name) && !VERCEL_INJECTED_PUBLIC_ENV.has(name) && !name.startsWith(VERCEL_INJECTED_PUBLIC_ENV_PREFIX));
+const disallowedPublicEnv = Object.keys(process.env).filter((name) => name.startsWith('NEXT_PUBLIC_') && !ALLOWED_PUBLIC_ENV.has(name) && !name.startsWith(VERCEL_RESERVED_PUBLIC_ENV_PREFIX));
 
 if (disallowedPublicEnv.length > 0) {
   fail(`허용 목록에 없는 NEXT_PUBLIC_ 변수가 있습니다: ${disallowedPublicEnv.join(', ')}. 브라우저에 노출해도 되는 값만 ALLOWED_PUBLIC_ENV에 추가하세요.`);
