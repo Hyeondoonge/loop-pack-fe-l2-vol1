@@ -3,7 +3,7 @@
 - 대상: `docs/assignments/week-10-quests.md` 1번(62~82번 줄) 릴리즈 흐름 문서화
 - 선행 결정: [01-env-variable-decisions.md](./01-env-variable-decisions.md), [02-env-validation-decisions.md](./02-env-validation-decisions.md)
 - 이 문서가 다루는 범위: **브랜치를 어떻게 두고 각 단계에서 무엇을 확인할지까지.** 어떤 검증을 required로 둘지와 CI job을 어떻게 구성할지는 [04-quality-gate-ci-jobs.md](./04-quality-gate-ci-jobs.md)에 있다. rollback 절차와 릴리즈 추적 기록 위치(과제 1번의 나머지 항목)는 아직 정하지 않았다.
-- 상태: **작성 시점 결정** (2026-09-10). 아직 코드·설정 변경 없음.
+- 상태: **결정 확정, 일부 구현됨** (2026-09-10 작성 / 2026-09-11 갱신). `origin/develop`·`origin/main`은 생성돼 있고 Vercel Production 배포가 `main`에서 이루어지는 것까지 확인했다. branch protection은 아직 걸지 않았다.
 
 ## 목차
 
@@ -157,11 +157,15 @@ upstream PR은 base가 `Hyeondoonge`라 필터에 걸리지 않는다.
 - 배포 실패 시 로그 위치
 - commit SHA · CI run URL · Preview URL · Production URL을 어디에 기록할지
 
-브랜치 구조를 실제로 만들 때 정해야 하는 것:
+브랜치 구조와 관련해 남은 것:
 
-- **Vercel의 Production Branch와 Preview 대상 브랜치** — 1번 표는 `origin/main`을 Production Branch로 적었으나 현재 Vercel이 어느 브랜치를 그렇게 보고 있는지 확인되지 않았다. `feat/week-10`에서 Preview가 생성되고 Production 배포 이력도 있으므로 어떤 설정이든 걸려 있다.
-- **`origin/develop`을 어느 커밋에서 만들지** — 4번이 스타터 동기화 대상을 develop으로 옮긴다고만 정했고 최초 생성 기준점은 정하지 않았다.
-- **`origin/Hyeondoonge` 처리** — 1주차 시점(`8432942a`)에 멈춰 있다. develop 도입 후 삭제할지 남길지.
+- **`origin/Hyeondoonge` 처리** — 1주차 시점(`8432942a`)에 멈춰 있다. 8번에서 제출 경로를 `origin/main`으로 정했으므로 이 브랜치는 쓰이지 않는다. 삭제할지 남길지 미정.
+- **Vercel Preview 대상 브랜치** — 모든 브랜치인지 `develop`만인지 확인되지 않았다.
+
+2026-09-11 시점에 해소된 항목:
+
+- **`origin/develop` 생성** — `5151e57c chore: develop에 upstream/main(과제 스타터) 반영`으로 만들어져 로컬·origin 양쪽에 있다. 4번의 결정을 그대로 실행한 커밋이다.
+- **Vercel Production Branch** — `main`으로 확인했다. 2026-09-09 Production 배포의 ref가 `5e20da86`이며 현재 `origin/main` HEAD와 같다.
 
 ## 10. References
 
