@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEPLOYMENT_URL: https://loop-pack-fe-l2-vol1.vercel.app
+  DEPLOYMENT_URL: https://loop-pack-fe-l2-vol1-gamma.vercel.app
 
 jobs:
   smoke:
