@@ -4,17 +4,23 @@ name: Smoke
   repository_dispatch:
     types:
       - vercel.deployment.promoted
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: smoke 대상 URL (비우면 Production 도메인)
+        required: false
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: smoke-production
+  # 수동 Preview 실행이 Production smoke를 취소하지 않도록 대상별로 가른다
+  group: smoke-${{ inputs.deployment_url || 'production' }}
   cancel-in-progress: true
 
 env:
-  DEPLOYMENT_URL: https://loop-pack-fe-l2-vol1-gamma.vercel.app
+  DEPLOYMENT_URL: ${{ inputs.deployment_url || 'https://loop-pack-fe-l2-vol1-gamma.vercel.app' }}
 
 jobs:
   smoke:
@@ -39,6 +45,12 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Record deployment info
+        # 외부에서 온 payload를 run 스크립트에 직접 넣지 않고 환경 변수로 받아 스크립트 주입을 막는다
+        env:
+          TRIGGER: ${{ github.event_name }}
+          PAYLOAD_DEPLOYMENT_ID: ${{ github.event.client_payload.id }}
+          PAYLOAD_COMMIT_SHA: ${{ github.event.client_payload.git.sha }}
+          PAYLOAD_ENVIRONMENT: ${{ github.event.client_payload.environment }}
         run: |
           {
             echo "### Smoke test target"
@@ -46,10 +58,13 @@ jobs:
             echo "| 항목 | 값 |"
             echo "| --- | --- |"
             echo "| DEPLOYMENT_URL | ${DEPLOYMENT_URL} |"
-            echo "| trigger | ${{ github.event_name }} |"
-            echo "| deployment id (client_payload.id) | ${{ github.event.client_payload.id || 'N/A (manual run)' }} |"
-            echo "| commit SHA (client_payload.git.sha) | ${{ github.event.client_payload.git.sha || 'N/A (manual run)' }} |"
-            echo "| environment (client_payload.environment) | ${{ github.event.client_payload.environment || 'N/A (manual run)' }} |"
+            echo "| trigger | ${TRIGGER} |"
+            echo "| deployment id (client_payload.id) | ${PAYLOAD_DEPLOYMENT_ID:-N/A (manual run)} |"
+            echo "| commit SHA (client_payload.git.sha) | ${PAYLOAD_COMMIT_SHA:-N/A (manual run)} |"
+            echo "| environment (client_payload.environment) | ${PAYLOAD_ENVIRONMENT:-N/A (manual run)} |"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Run smoke tests
+        # secret은 이 step에만 전달한다
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: pnpm test:smoke
