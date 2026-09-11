@@ -2,8 +2,8 @@
 
 - 대상: `docs/assignments/week-10-quests.md` 5번(158~189번 줄) Vercel 배포 & smoke test 운영 확인
 - 선행 결정: [01-env-variable-decisions.md](./01-env-variable-decisions.md), [02-env-validation-decisions.md](./02-env-validation-decisions.md), [04-quality-gate-ci-jobs.md](./04-quality-gate-ci-jobs.md) 4-8
-- 이 문서가 다루는 범위: **어느 경로를 확인하고 무엇을 판정 기준으로 삼을지까지.** 배포 URL 접근 방법(Vercel Deployment Protection)과 CI 자동 실행 연동은 8번에 미결로 남겼다.
-- 상태: **작성 시점 결정** (2026-09-11). 아직 코드 없음.
+- 이 문서가 다루는 범위: **어느 경로를 확인하고 무엇을 판정 기준으로 삼을지, 그리고 Production 배포 직후 자동 실행 방법까지.** Preview 배포 URL 접근 방법(Vercel Deployment Protection)과 Preview 자동 실행 연동은 9번에 미결로 남겼다.
+- 상태: **1~7번 구현됨, 8번 설계만** (2026-09-11). 스펙은 `b6d763c9`로 구현했다. `.github/workflows/smoke.yml`은 아직 없다.
 
 ## 목차
 
@@ -14,8 +14,9 @@
 5. [Open Graph 확인은 넣지 않는다](#5-open-graph-확인은-넣지-않는다)
 6. [실행 시점](#6-실행-시점)
 7. [파일 구성](#7-파일-구성)
-8. [아직 정하지 않은 것](#8-아직-정하지-않은-것)
-9. [References](#9-references)
+8. [Production 배포 직후 자동 실행](#8-production-배포-직후-자동-실행)
+9. [아직 정하지 않은 것](#9-아직-정하지-않은-것)
+10. [References](#10-references)
 
 ## 1. 왜 하는가 — CI가 구조적으로 못 보는 층
 
@@ -129,7 +130,7 @@ getAppOrigin()이 잘못된 값을 반환
 | `develop` push → Preview 배포 후 | develop → main 머지 판단 근거 | 하지 않음 |
 | `main` push → Production 배포 후 | rollback 판단 근거 | 불가능(배포 후) |
 
-과제 187번 줄이 Preview와 Production 양쪽 실행을 요구하므로 두 시점 모두 필요하다.
+과제 187번 줄이 Preview와 Production 양쪽 실행을 요구하므로 두 시점 모두 필요하다. Production 쪽을 자동으로 실행하는 방법은 8번에서 정한다.
 
 ## 7. 파일 구성
 
@@ -149,17 +150,77 @@ DEPLOYMENT_URL=https://... pnpm test:smoke
 - 채택하지 않은 것: **`--grep` 태그로 같은 config 안에서 분리.** 위 `webServer` 문제가 남는다.
 - 채택하지 않은 것: **기존 E2E 스펙 재사용.** 과제 185번 줄이 명시적으로 배제한다.
 
-## 8. 아직 정하지 않은 것
+## 8. Production 배포 직후 자동 실행
 
-- **배포 URL 접근 방법** — Preview URL이 Vercel SSO로 302 리다이렉트된다. 해제할지 bypass 토큰을 쓸지는 실제로 실행해서 막히는 것을 확인한 뒤 정한다. 과제에 명시된 항목이 아니라 5번을 수행하기 위한 전제 조건이다.
-- **CI 자동 실행 연동** — Preview URL을 워크플로에서 받아오는 방법. 발제 237번 줄 기준 선택 사항이다.
-- **Production smoke test 실패 시 알림 방식** — 04 5번이 rollback 판단 입력으로만 정했다.
+- 질문: 배포가 언제 끝날지 모르는데, 최신 Production 배포를 끝난 직후에 어떻게 검사하는가
+- 범위: `main` push → Production 배포 이후만. Preview는 9번에 미결로 남긴다.
 
-## 9. References
+```
+main push → Vercel Production 빌드/승격 → repository_dispatch(vercel.deployment.promoted)
+  → smoke.yml: DEPLOYMENT_URL=<Production 도메인> pnpm test:smoke
+       통과 → 기록만 남긴다 / 실패 → 워크플로 실패, rollback 판단 입력(04 5번)
+```
+
+### 8-1. 대상 URL — Production 도메인 고정
+
+- 결정: **Production 도메인 `https://loop-pack-fe-l2-vol1-gamma.vercel.app`을 워크플로에 고정한다.**
+- 근거: Vercel Deployment Protection의 Standard Protection은 Production 도메인만 공개하고 나머지(배포별 고유 URL)는 차단한다("Protects all deployments except production domains").
+- 배포별 고유 URL(이벤트의 `client_payload.url`)을 쓰려면 Protection Bypass secret 등록이 추가로 필요해 대신 고정 도메인을 쓴다.
+- 감수하는 것: 고정 주소는 "그 시점에 도메인이 가리키는 배포"를 검사한다. 이벤트가 알려준 배포와 항상 같다는 보장은 8-2의 이벤트 선택과 8-5의 `concurrency`로 좁힌다.
+
+### 8-2. 트리거 — `vercel.deployment.promoted` 이벤트
+
+- 결정: **`repository_dispatch`의 `vercel.deployment.promoted`로 실행한다.**
+- 근거: 배포 종료 시점을 추측하지 않고 Vercel이 알려준다. `promoted`는 "production 승격(자동·수동)" 시점만 가리켜 8-1의 Production 도메인 검사와 의미가 맞고, 수동 승격(rollback 포함)도 덮는다.
+- `vercel.deployment.success`는 Preview 배포에도 오고 수동 승격을 구분하지 못해 제외했다. main push 후 `sleep`/폴링으로 배포 완료를 추측하는 방식도 배포 소요 시간을 추측한다는 같은 문제라 제외했다.
+- 전제의 한계: 발생 시점은 공식 README 설명 한 줄이 근거다. 실제 동작은 구현 후 확인이 필요하다.
+
+### 8-3. 파일 — `quality.yml`과 분리한 `smoke.yml`
+
+- 결정: **`.github/workflows/smoke.yml`을 새로 만든다.**
+- 근거: 트리거가 다르다(`quality.yml`은 `push`·`pull_request`, 이건 `repository_dispatch`). 한 파일에 두면 모든 job에 이벤트별 `if` 조건이 붙는다.
+
+### 8-4. job 구성
+
+job은 `smoke` 하나다.
+
+| 순서 | step |
+| --- | --- |
+| 1 | Checkout (`persist-credentials: false`) |
+| 2 | pnpm·Node 설정 |
+| 3 | `pnpm install --frozen-lockfile` |
+| 4 | `pnpm exec playwright install --with-deps chromium` |
+| 5 | 검사 대상(배포 id·commit SHA·URL·run URL) → `$GITHUB_STEP_SUMMARY` |
+| 6 | `pnpm test:smoke` (`DEPLOYMENT_URL` 주입) |
+
+- build·환경 변수 검증은 넣지 않는다: 배포된 산출물만 검사하고, `playwright.smoke.config.ts`가 앱 코드를 import하지 않아 필요 없다.
+- checkout은 GitHub 기본값(기본 브랜치 `develop` 최신 커밋)을 쓴다. 이벤트의 `git.sha`로 checkout하지 않는 이유: rollback으로 옛 배포가 승격되면 그 커밋에 `smoke/`가 없을 수 있다. 감수하는 것: develop에만 병합된 스펙·워크플로 변경이 main 배포보다 먼저 적용된다.
+- `workflow_dispatch`도 함께 둔다: 이벤트 미수신이나 rollback 재확인 시 수동 실행용.
+
+### 8-5. 워크플로 파라미터
+
+| 파라미터 | 값 | 근거 |
+| --- | --- | --- |
+| `permissions` | `contents: read` | checkout만 한다 |
+| `timeout-minutes` | `4` | e2e job(04) 기준과 같은 상한 |
+| `concurrency` | group `smoke-production`, `cancel-in-progress: true` | 도메인이 마지막 승격 배포 하나만 가리킨다. 짧은 간격 재승격 시 앞 실행이 이미 바뀐 대상을 검사하므로 취소해야 기록이 정확하다 |
+
+## 9. 아직 정하지 않은 것
+
+- **Preview 배포 URL 접근 방법** — Standard Protection이 배포별 고유 URL을 차단한다(8-1). 보호 해제 또는 Protection Bypass for Automation 중 선택 필요. `getAppOrigin()`의 Preview 분기가 쓰는 `VERCEL_URL`은 Vercel 문서상 Standard Deployment Protection과 병용 불가라, bypass로 페이지 접근이 되어도 서버의 데이터 요청이 막힐 수 있다.
+- **Preview 자동 실행 연동** — 발제 노트 기준 선택 사항.
+- **Production smoke test 실패 알림 경로** — Actions 실행 실패로 남는 것 외 별도 알림은 미확인.
+- **`vercel.deployment.promoted` 수신 여부와 소요 시간** — 구현 후 첫 배포에서 확인한다.
+- **Instant Rollback 때도 `promoted` 이벤트가 오는가** — 오지 않으면 rollback 절차에 `workflow_dispatch` 수동 실행을 넣는다.
+
+## 10. References
 
 | 구분 | 출처 |
 | --- | --- |
-| 과제 | `docs/assignments/week-10-quests.md` 5번(158~189번 줄), 체크리스트(246~248번 줄) |
+| 과제 | `docs/assignments/week-10-quests.md` 1번 70번 줄(rollback 후 smoke test), 5번(158~189번 줄), 체크리스트(246~248번 줄) |
 | 발제 | `docs/mentor-notes/round10-cicd-자동화-배포.md` 235~237번 줄(Preview Smoke Test) |
-| 코드 | `src/shared/config/appOrigin.ts`, `src/shared/api/apiFetch.ts:21`, `src/_app/RootLayout.tsx:25` |
+| 코드 | `src/shared/config/appOrigin.ts`, `src/shared/api/apiFetch.ts:21`, `src/_app/RootLayout.tsx:25`, `playwright.smoke.config.ts` |
 | 실측 | `pnpm build` 라우트 출력 — 16개 전부 `ƒ (Dynamic)` |
+| Vercel 문서 | Deployment Protection(`vercel.com/docs/deployment-protection`) — Standard Protection 범위 |
+| Vercel 문서 | Vercel for GitHub(`vercel.com/docs/git/vercel-for-github`) — Repository dispatch events, `VERCEL_URL` 주의 |
+| Vercel | `github.com/vercel/repository-dispatch` README — 이벤트별 설명 |
