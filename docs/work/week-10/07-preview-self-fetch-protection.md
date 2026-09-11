@@ -254,16 +254,22 @@ Preview smoke는 **수동 실행**(`gh workflow run smoke.yml --ref feat/week-10
 | 문서 | 영향 |
 | --- | --- |
 | `01` 5절 90번 줄 보조 문단("self-fetch 관점에서도 같은 방향이다… 정확히 `VERCEL_URL`이 가리키는 그 배포다") | self-fetch 목적지가 요청 URL로 바뀌어 근거가 달라진다. 5절의 주 근거(87~88번 줄, PR 본문에 기록할 주소의 불변성과 커밋 간 비교)는 유지된다. `metadataBase`(`RootLayout.tsx:25`)는 fetch가 아니라 계속 `getAppOrigin()`을 쓴다 |
+| `01` 4절 68·70번 줄, 6절 95번 줄 | "소비처 두 곳이 모두 `getAppOrigin()`을 거친다", "`apiFetch.ts:21`"이 Preview 분기에서는 더 이상 사실이 아니다. Preview의 `apiFetch`는 `getAppOrigin()` 대신 요청 Host를 쓰고, 해당 코드 줄도 옮겨졌다 |
+| `06` 8-5절 concurrency 행 | `smoke-production` 고정 그룹이 `31128f40`에서 `smoke-${{ inputs.deployment_url \|\| 'production' }}`로 바뀌었고 `workflow_dispatch` 입력 `deployment_url`이 추가됐다. 반영되지 않았다 |
 | `06` 9절 첫 항목(210번 줄) | 이 문서로 결정됐다. 해당 항목이 예상한 "bypass로 페이지 접근이 되어도 서버의 데이터 요청이 막힐 수 있다"는 실제로 발생했다 |
+| `06` 9절 둘째 항목(211번 줄) "Preview 자동 실행 연동 — 발제 노트 기준 선택 사항" | 과제 체크리스트 246번 줄은 "Preview/Production URL에서 smoke test(3~5개)가 자동 실행되는가"를 묻는다. 두 기준이 어긋나며, 어느 쪽을 따를지는 정하지 않았다(10절) |
 
 ## 10. 아직 확인하지 않은 것
 
 | 항목 | 확인 방법 |
 | --- | --- |
-| **Preview smoke 자동 실행 트리거** | 미구현. 과제 187번 줄(Preview·Production 모두 실행)과 체크리스트 246번 줄(자동 실행)이 요구한다. `06` 9절 "Preview 자동 실행 연동"도 미결 |
+| **Preview smoke 자동 실행 트리거** | 미구현. 과제 187번 줄(Preview·Production 모두 실행)과 체크리스트 246번 줄(자동 실행)은 요구하고, `06` 211번 줄은 발제 노트 기준 선택 사항으로 적었다. 어느 기준을 따를지 미결 |
+| 클라이언트 컴포넌트 SSR 경로에서 Preview 분기의 `headers()`·`cookies()`가 동작하는가 | `/cart`·`/wishlist`·`/orders/new`는 prefetch 없이 SSR 중 `productCatalogQueries.lookup()`이 `apiFetch`를 부른다. Next.js `headers()` 문서 페이지는 Server Component 사용만 명시한다. smoke의 `orders-new`는 로그인 리다이렉트만 확인해 이 경로를 검증하지 않는다. 실측 없음 |
+| smoke 호스트 판정의 정확도 | `endsWith('-hyeodoong2s-projects.vercel.app')`는 다른 계정이 이름을 `…-hyeodoong2s-projects`로 지은 프로젝트의 Production 도메인에도 참이 될 수 있다. 검증은 `…vercel.app.attacker.com` 형태만 했다. `workflow_dispatch` 입력은 저장소 쓰기 권한이 있어야 해 영향은 제한적 |
 | Vercel Preview에서 요청 Host를 믿어도 되는가 | 추론(Vercel 라우팅이 해당 도메인을 이 배포로 보낸 요청만 도달). 브랜치 URL·고유 URL 모두 동작은 확인했으나 Host 위조 요청에 대한 실측은 없음 |
 | 수정 전 코드에서 브랜치 URL 방문자의 `/api/auth/me` prefetch도 실패했는가 | 쿠키가 URL 하나에만 유효하다는 문서에서 추론. 브랜치 URL이 수정 후 배포를 가리켜 측정 불가 |
-| 수정 전 서버 대기 17초의 구성 | 홈 prefetch와 `generateHomeMetadata`의 재시도가 각각 얼마를 차지하는지 분해하지 않았다 |
+| 수정 전 서버 대기 17초의 구성 | 홈 prefetch, SSR 중 `HomeSection` `useSuspenseQuery`의 서버 재시도, `generateHomeMetadata`의 재시도가 각각 얼마를 차지하는지 분해하지 않았다 |
+| 수정 전후 실측의 TTFB 24~43ms | 계산 기준을 설명하지 못해 판정에서 제외(8절) |
 | Vercel Git Fork Protection이 켜져 있는가 | 대시보드 Settings → Security. bypass secret이 모든 배포 환경에 들어가므로 fork PR 배포 승인 여부가 노출 경로가 된다 |
 | secret 없을 때 smoke 동작(헤더 없이 진행) | 사용자 확정 대기 |
 
@@ -277,7 +283,10 @@ Preview smoke는 **수동 실행**(`gh workflow run smoke.yml --ref feat/week-10
 | Claude: "안정성 축에서 bypass 헤더가 낫다" | 리다이렉트 측정에서 커스텀 헤더가 다른 origin으로 전달되고 쿠키는 제거됨을 확인했다. Vercel 인증 쿠키가 URL 하나에만 유효하다는 문서도 확인해, 비밀키 유출 기준으로는 origin + 쿠키가 낫다고 정정했다 |
 | "self-fetch는 Vercel 환경에서만 발생한다"(사용자 질문) | self-fetch는 `apiFetch.ts` 서버 분기에서 모든 환경(로컬·CI·Docker·Production)에 일어난다. Vercel Preview에만 있는 것은 보호로 인한 실패다 |
 | "secret은 `NEXT_PUBLIC_`이 아니므로 앱에 노출되지 않는다"(사용자 질문) | 접두사가 막는 것은 브라우저 번들 경로뿐이다. 서버가 읽어 헤더로 보내는 경로와 리다이렉트 전달은 막지 못한다 |
-| Claude: "수정 전 홈 섹션 서버 대기는 약 11초" | 요청 4회·재시도 대기로 계산한 값이었다. 실측은 HTML 응답 완료 중앙값 17,021ms로 더 길었다(8절) |
+| Claude: "수정 전 홈 섹션 서버 대기는 약 11초" | prefetch 한 번의 요청 4회·재시도 대기만으로 계산한 값이었다. 실측은 HTML 응답 완료 중앙값 17,021ms로 더 길었고, 교차 검토에서 SSR 중 `useSuspenseQuery`의 서버 재시도가 계산에서 빠졌음을 지적받았다(2절 7번, 8절) |
+| Claude: "서버 호출 지점은 4곳", "실패하면 브라우저가 다시 요청한다" | 명시적 prefetch·fetchQuery만 셌다. `'use client'` 컴포넌트의 SSR 중 `useSuspenseQuery`도 서버 분기를 탄다는 점을 교차 검토에서 지적받아 2절을 고쳤다 |
+| Claude: Next.js `headers()` 사용 위치를 "Server Components, Server Actions, Route Handlers, Middleware"로 인용 | 이 목록은 Next.js 소스 `packages/next/src/server/request/headers.ts`의 JSDoc(Context7로 조회)에 있는 표현이다. 공식 문서 페이지는 Server Component 사용만 명시한다. 12절 출처 설명을 고쳤다 |
+| Claude: 테스트 "52파일 368개 통과" | `.claude/worktrees/ci-before` 복사본이 함께 실행된 수치였다. 프로젝트 본체는 26파일 185개(8절) |
 | 사용자 요청: 수정 전·후 측정 URL로 같은 브랜치 URL 두 개 | 브랜치 URL은 최신 배포만 가리켜 둘 다 수정 후 배포였다. 배포별 고유 URL(`…-k5d6fc2ep-…`, `…-aidpofdgw-…`)로 바꿔 측정했다 |
 | Claude: 측정 스크립트를 사용자가 secret과 함께 로컬 실행하는 방식 제안 | secret 없이도 Vercel에 로그인된 사용자 Chrome에서 측정할 수 있어 Chrome 연동 도구로 바꿨다. 준비한 스크립트는 쓰지 않았다 |
 
@@ -290,6 +299,7 @@ Preview smoke는 **수동 실행**(`gh workflow run smoke.yml --ref feat/week-10
 - [Vercel — System environment variables](https://vercel.com/docs/environment-variables/system-environment-variables) — `VERCEL_URL`의 Standard Protection 병용 불가 주석, `VERCEL_AUTOMATION_BYPASS_SECRET` "Both build and runtime", 시스템 환경 변수 노출 체크박스
 - [Vercel — Accessing Deployments through Generated URLs](https://vercel.com/docs/deployments/generated-urls) — 배포별 고유 URL·브랜치 URL·Production URL 구분
 - [Vercel — Are Preview Deployments indexed by search engines?](https://vercel.com/kb/guide/are-vercel-preview-deployment-indexed-by-search-engines) — Preview `X-Robots-Tag: noindex`
-- [Next.js — headers()](https://nextjs.org/docs/app/api-reference/functions/headers) — 사용 가능 위치(Server Components, Server Actions, Route Handlers, Middleware)
+- [Next.js — headers()](https://nextjs.org/docs/app/api-reference/functions/headers) — Server Component에서 요청 헤더를 읽는 async 함수. Server Actions·Route Handlers·Middleware까지 적힌 목록은 공식 문서 페이지가 아니라 Next.js 소스 `packages/next/src/server/request/headers.ts` JSDoc의 표현
+- [TanStack Query `retryer`](https://github.com/TanStack/query/blob/main/packages/query-core/src/retryer.ts) — 기본 재시도 대기 `min(1000 * 2 ** failureCount, 30000)`(교차 검토에서 설치본 `query-core` 5.101.2로 확인)
 - 코드: `src/shared/api/apiFetch.ts`, `src/shared/config/appOrigin.ts`, `src/_app/RootLayout.tsx`, `src/_pages/home/ui/HomePage.tsx`, `src/_pages/home/api/homeQueries.ts`, `src/_pages/home/api/generateHomeMetadata.ts`, `src/_pages/product-list/api/generateProductListMetadata.ts`, `src/_pages/product-list/api/productQueries.ts`, `playwright.smoke.config.ts`, `.github/workflows/smoke.yml`
-- 커밋·실행: `319f3a7d`(변경 전 기준), `31128f40`(구현), deployment 6395002549, run 34609425053
+- 커밋·실행: `319f3a7d`(변경 전 기준, Preview deployment 6390255538 `…-k5d6fc2ep-…`), `31128f40`(구현, Preview deployment 6395002549 `…-aidpofdgw-…`), smoke run 34609425053
