@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  APP_ORIGIN: http://localhost:3000
+  APP_ORIGIN: not-a-url
 
 jobs:
   quality:
