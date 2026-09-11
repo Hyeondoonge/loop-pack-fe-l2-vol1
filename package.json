@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "prebuild": "pnpm validate-env",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
