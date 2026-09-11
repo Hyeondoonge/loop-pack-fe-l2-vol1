@@ -1,0 +1,55 @@
+name: Smoke
+
+"on":
+  repository_dispatch:
+    types:
+      - vercel.deployment.promoted
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-production
+  cancel-in-progress: true
+
+env:
+  DEPLOYMENT_URL: https://loop-pack-fe-l2-vol1.vercel.app
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 10.15.1
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Record deployment info
+        run: |
+          {
+            echo "### Smoke test target"
+            echo ""
+            echo "| 항목 | 값 |"
+            echo "| --- | --- |"
+            echo "| DEPLOYMENT_URL | ${DEPLOYMENT_URL} |"
+            echo "| trigger | ${{ github.event_name }} |"
+            echo "| deployment id (client_payload.id) | ${{ github.event.client_payload.id || 'N/A (manual run)' }} |"
+            echo "| commit SHA (client_payload.git.sha) | ${{ github.event.client_payload.git.sha || 'N/A (manual run)' }} |"
+            echo "| environment (client_payload.environment) | ${{ github.event.client_payload.environment || 'N/A (manual run)' }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Run smoke tests
+        run: pnpm test:smoke
